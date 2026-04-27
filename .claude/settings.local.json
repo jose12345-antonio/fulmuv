@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"format\\\\|precio\\\\|US\\\\$\\\\|moneda\\\\|currency\\\\|font-weight\\\\|fw-bold\\\\|font_weight\" /Applications/XAMPP/xamppfiles/htdocs/fulmuv/productos_categoria.php)",
+      "Bash(grep -n \"precio\\\\|format\\\\|US\\\\$\\\\|moneda\\\\|product-price\\\\|price\" /Applications/XAMPP/xamppfiles/htdocs/fulmuv/js/productos_categoria.js)",
+      "Bash(python3 -)",
+      "Bash(grep -n 'session\\\\|SESSION\\\\|$_SESSION\\\\|usuario_id\\\\|id_usuario\\\\|logged\\\\|isLogged\\\\|logueado' /Applications/XAMPP/xamppfiles/htdocs/fulmuv/shop-checkout.php)",
+      "Bash(grep -n 'session\\\\|SESSION\\\\|$_SESSION\\\\|usuario_id\\\\|id_usuario\\\\|logged' /Applications/XAMPP/xamppfiles/htdocs/fulmuv/includes/header.php)",
+      "Bash(grep -rn 'session_start\\\\|$_SESSION\\\\[' /Applications/XAMPP/xamppfiles/htdocs/fulmuv/includes/header.php)",
+      "Bash(grep -n '$_SESSION\\\\[' /Applications/XAMPP/xamppfiles/htdocs/fulmuv/includes/header.php)",
+      "Bash(git init *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git remote *)",
+      "Bash(ssh -T git@github.com)",
+      "Bash(ssh-keygen -t ed25519 -C \"josecarrasco1998@outlook.com\" -f ~/.ssh/id_ed25519 -N \"\")",
+      "Bash(git push *)",
+      "Bash(git rm *)"
+    ]
+  }
+}

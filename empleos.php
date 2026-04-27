@@ -1,0 +1,1654 @@
+<?php
+include 'includes/header.php';
+?>
+<link rel="canonical" href="https://fulmuv.com/empleos.php">
+
+<style>
+    .loop-grid {
+        padding-bottom: 1rem;
+    }
+
+    .card-empleo {
+        border: 1px solid rgba(148, 163, 184, 0.18) !important;
+        border-radius: 22px !important;
+        transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        overflow: hidden;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    }
+
+    .card-empleo:hover {
+        box-shadow: 0 24px 46px rgba(15, 23, 42, 0.14);
+        border-color: rgba(36, 38, 25, 0.28) !important;
+        transform: translateY(-6px);
+    }
+
+    .empleo-media {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 210px;
+        max-height: 210px;
+        padding: 14px;
+        background:
+            radial-gradient(circle at top right, rgba(36, 38, 25, 0.10), transparent 42%),
+            linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+    }
+
+    .card-empleo .card-img-top,
+    .empleo-img {
+        width: 100%;
+        height: 182px !important;
+        object-fit: contain;
+        object-position: center;
+        mix-blend-mode: multiply;
+    }
+
+    .empleo-badge-top {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .42rem .7rem;
+        border-radius: 999px;
+        background: rgba(36, 38, 25, 0.92);
+        color: #fff;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .03em;
+    }
+
+    .empleo-card-body {
+        padding: 1.05rem 1.05rem 1.15rem;
+    }
+
+    .card-title {
+        margin-bottom: .7rem;
+    }
+
+    .card-title a {
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 1.02rem;
+        line-height: 1.32;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-title a:hover {
+        color: #242619;
+    }
+
+    .empleo-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+        padding: .42rem .74rem;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #334155;
+        font-size: .76rem;
+        font-weight: 700;
+    }
+
+    .empleo-resumen {
+        color: #475569;
+        font-size: .92rem !important;
+        line-height: 1.55 !important;
+        min-height: 4.35rem;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+    }
+
+    .empleo-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .75rem;
+        padding-top: .95rem;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .empleo-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: .2rem;
+    }
+
+    .empleo-meta-label {
+        font-size: .7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #94a3b8;
+    }
+
+    .empleo-meta-value {
+        color: #0f172a;
+        font-size: .9rem;
+        font-weight: 700;
+    }
+
+    .btn-postular {
+        border-radius: 12px;
+        padding: 10px 22px;
+        font-weight: 700;
+        letter-spacing: .01em;
+        background: #242619;
+        border: 1px solid #242619;
+        color: #fff;
+        box-shadow: 0 12px 24px rgba(36, 38, 25, 0.18);
+    }
+
+    .btn-postular:hover,
+    .btn-postular:focus {
+        background: #10110c;
+        border-color: #10110c;
+        color: #fff;
+    }
+
+    /* ===== Modal layout moderno ===== */
+    #modalPostular .modal-content {
+        border-radius: 24px;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        box-shadow: 0 28px 70px rgba(15, 23, 42, 0.18);
+    }
+
+    #modalPostular .modal-body {
+        max-height: 82vh;
+        overflow: hidden;
+    }
+
+    #modalPostular .modal-grid {
+        height: 82vh;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    }
+
+    /* ===== Columna izquierda ===== */
+    #modalPostular .left-pane {
+        height: 82vh;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+        border-right: 1px solid rgba(226, 232, 240, 0.9);
+    }
+
+    #modalPostular .left-carousel-wrap {
+        position: relative;
+        height: 44%;
+        min-height: 250px;
+        margin: 1rem 1rem 0;
+        border-radius: 22px;
+        overflow: hidden;
+    }
+
+    #modalPostular #carouselEmpleo,
+    #modalPostular #carouselEmpleo .carousel-inner,
+    #modalPostular #carouselEmpleo .carousel-item {
+        height: 100%;
+    }
+
+    /* Fondo con “cover” blur para que no se vea vacío con contain */
+    #modalPostular .carousel-item {
+        position: relative;
+        background: linear-gradient(180deg, #eef2f7 0%, #dbe4f0 100%);
+    }
+
+    #modalPostular .carousel-item::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: var(--bg);
+        background-size: cover;
+        background-position: center;
+        filter: blur(18px);
+        transform: scale(1.15);
+        opacity: .40;
+    }
+
+    #modalPostular .carousel-item img {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 14px 22px;
+    }
+
+    /* Indicadores más bonitos */
+    #modalPostular .carousel-indicators {
+        margin-bottom: 10px;
+    }
+
+    #modalPostular .carousel-indicators [data-bs-target] {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+    }
+
+    /* Overlay info */
+    #modalPostular .left-overlay {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 18px 18px 16px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, .58) 45%, rgba(15, 23, 42, .92) 100%);
+    }
+
+    #modalPostular .job-title {
+        font-size: 1.18rem;
+        line-height: 1.25;
+        font-weight: 800;
+    }
+
+    #modalPostular .job-meta {
+        opacity: .95;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem .75rem;
+    }
+
+    /* Descripción debajo: scroll interno */
+    #modalPostular .left-desc {
+        height: 56%;
+        background: #fff;
+        margin: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 22px;
+        padding: 1rem 1rem 1.1rem;
+        overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    #modalPostular .left-desc .desc-box {
+        height: calc(100% - 30px);
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+
+    #modalPostular .left-desc .desc-box::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #modalPostular .left-desc .desc-box::-webkit-scrollbar-thumb {
+        background: #d6d6d6;
+        border-radius: 999px;
+    }
+
+    /* ===== Columna derecha (form) ===== */
+    #modalPostular .right-pane {
+        height: 82vh;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+    }
+
+    #modalPostular .right-body {
+        padding: 1.15rem 1.15rem 0;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    #modalPostular .right-footer {
+        padding: 1rem 1.15rem;
+        border-top: 1px solid #eee;
+        background: #fff;
+    }
+
+    /* Inputs más modernos */
+    #modalPostular .form-control {
+        border-radius: 14px;
+        padding: 12px 14px;
+        border: 1px solid #dbe4f0;
+        background: #f8fafc;
+        box-shadow: none;
+    }
+
+    #modalPostular .form-control:focus {
+        border-color: rgba(36, 38, 25, 0.45);
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(36, 38, 25, 0.08);
+    }
+
+    #modalPostular .form-label {
+        color: #334155;
+        font-weight: 700;
+        font-size: .9rem;
+    }
+
+    #modalPostular .right-body .row.g-3 {
+        background: #fff;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 22px;
+        padding: .35rem;
+        box-shadow: 0 18px 36px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Botones */
+    #modalPostular .btn {
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 700;
+    }
+
+    /* Responsive: en móvil, apila */
+    @media (max-width: 991.98px) {
+
+        #modalPostular .modal-body,
+        #modalPostular .modal-grid,
+        #modalPostular .left-pane,
+        #modalPostular .right-pane {
+            height: auto;
+            max-height: none;
+        }
+
+        #modalPostular .left-carousel-wrap {
+            height: 260px;
+        }
+
+        #modalPostular .left-desc {
+            height: auto;
+            max-height: 260px;
+        }
+    }
+
+    /* Contenedor del carrusel debe ser relative */
+    .left-carousel-wrap {
+        position: relative;
+    }
+
+    /* Overlay SIEMPRE visible */
+    .left-overlay {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        z-index: 10;
+        /* 👈 importante */
+
+        padding: 16px 18px;
+
+        background: linear-gradient(180deg,
+                rgba(0, 0, 0, 0) 0%,
+                rgba(0, 0, 0, 0.55) 45%,
+                rgba(0, 0, 0, 0.85) 100%);
+
+        color: #fff;
+
+        pointer-events: none;
+        /* 👈 evita que el carrusel deje de funcionar */
+    }
+
+    /* Texto más visible */
+    .left-overlay .job-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .left-overlay .job-meta {
+        font-size: 13px;
+        opacity: 0.9;
+    }
+
+    #postularDescripcion,
+    #postularDescripcion * {
+        font-size: 14px !important;
+        line-height: 1.65 !important;
+        color: #334155 !important;
+        font-family: inherit !important;
+        unicode-bidi: plaintext;
+        white-space: normal;
+    }
+
+    #postularDescripcion h1,
+    #postularDescripcion h2,
+    #postularDescripcion h3,
+    #postularDescripcion h4,
+    #postularDescripcion h5,
+    #postularDescripcion h6 {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        line-height: 1.5 !important;
+        margin: 0 0 .65rem !important;
+    }
+
+    #postularDescripcion p,
+    #postularDescripcion li {
+        margin-bottom: .6rem !important;
+        white-space: pre-wrap;
+    }
+
+    #postularDescripcion ul,
+    #postularDescripcion ol {
+        padding-left: 1.15rem !important;
+    }
+
+    #modalPostular .modal-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%) !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    #modalPostular .right-footer {
+        background: #f8fafc;
+    }
+
+    #modalPostular .btn-primary {
+        background: #242619;
+        border-color: #242619;
+        box-shadow: 0 12px 24px rgba(36, 38, 25, 0.18);
+    }
+
+    #modalPostular .btn-primary:hover,
+    #modalPostular .btn-primary:focus {
+        background: #10110c;
+        border-color: #10110c;
+    }
+
+    @media (max-width: 767px) {
+        .empleo-media {
+            min-height: 180px;
+            max-height: 180px;
+        }
+
+        .card-empleo .card-img-top,
+        .empleo-img {
+            height: 152px !important;
+        }
+
+        .empleo-meta-grid {
+            grid-template-columns: 1fr;
+        }
+
+        #modalPostular .left-carousel-wrap,
+        #modalPostular .left-desc {
+            margin: .85rem;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="archive-header-2 text-center mt-30">
+        <!-- <h1 class="display-2 mb-50">Lista de Productos</h1> -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="sidebar-widget-2 widget_search mb-50">
+                    <div class="search-form">
+                        <form action="#">
+                            <input type="text" placeholder="Buscar por título de empleos" />
+                            <button type="submit"><i class="fi-rs-search"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row flex-row-reverse" style="transform: none;">
+        <div class="col-lg-12">
+            <div class="shop-product-fillter">
+                <div class="totall-product">
+                    <h5>Encontramos <strong class="text-brand" id="totalProductosGeneral"></strong> empleos para ti!</h5>
+                </div>
+                <div class="sort-by-product-area">
+                    <div class="sort-by-cover d-flex justify-content-center align-items-center me-2">
+                        <div>
+                            <button type="button" id="btnUbicacion" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalUbicacion">
+                                <i class="fi-rs-marker me-1"></i> Cambiar ubicación
+                            </button>
+                        </div>
+                    </div>
+                    <div class="sort-by-cover mr-10">
+                        <div class="sort-by-product-wrap">
+                            <div class="sort-by">
+                                <span><i class="fi-rs-apps"></i>Show:</span>
+                            </div>
+                            <div class="sort-by-dropdown-wrap">
+                                <span> 6 <i class="fi-rs-angle-small-down"></i></span>
+                            </div>
+                        </div>
+                        <div class="sort-by-dropdown sort-show">
+                            <ul>
+                                <li><a class="active" href="#" data-value="6">6</a></li>
+                                <li><a href="#" data-value="12">12</a></li>
+                                <li><a href="#" data-value="18">18</a></li>
+                                <li><a href="#" data-value="24">24</a></li>
+                                <li><a href="#" data-value="30">30</a></li>
+                                <li><a href="#" data-value="40">40</a></li>
+                                <li><a href="#" data-value="all">All</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="loop-grid">
+                <div class="row" id="listaEmpleos">
+
+                </div>
+            </div>
+            <!-- <div class="loop-grid loop-list pr-30 mb-50"></div> -->
+
+            <div class="pagination-area mt-15 mb-sm-5 mb-lg-0">
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination justify-content-start" id="paginacionEventos"></ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal Ubicación -->
+<div class="modal fade" id="modalUbicacion" tabindex="-1" aria-labelledby="modalUbicacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="modalUbicacionLabel">
+                    <i class="fi-rs-marker me-1"></i> Elige tu ubicación
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label mb-1">Provincia</label>
+                    <select id="selectProvincia" class="form-control" required></select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label mb-1">Cantón</label>
+                    <select id="selectCanton" class="form-control" required></select>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary" id="limpiarUbicacion">Limpiar ubicación</button>
+                <button type="button" class="btn btn-primary" id="guardarUbicacion">Listo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Postulación -->
+<div class="modal fade" id="modalPostular" tabindex="-1" aria-labelledby="modalPostularLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+
+            <!-- HEADER -->
+            <div class="modal-header border-0 bg-light py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                        style="width:38px;height:38px;background:#111827;color:#fff;">
+                        <i class="fi-rs-briefcase"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" id="modalPostularLabel">Postular</h5>
+                        <small class="text-muted">Revisa el empleo y completa tus datos</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body p-0">
+                <div class="row g-0 modal-grid">
+
+                    <!-- ===== COLUMNA IZQUIERDA ===== -->
+                    <div class="col-lg-5 left-pane">
+
+                        <!-- CAROUSEL -->
+                        <div class="left-carousel-wrap">
+
+                            <div id="carouselEmpleo" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="4000">
+                                <div class="carousel-inner" id="carouselEmpleoInner">
+                                    <!-- Se llena por JS -->
+                                </div>
+
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselEmpleo" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon"></span>
+                                </button>
+
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselEmpleo" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon"></span>
+                                </button>
+
+                                <div class="carousel-indicators" id="carouselEmpleoIndicators"></div>
+                            </div>
+
+                            <!-- Overlay información -->
+                            <div class="left-overlay">
+                                <h5 class="text-white mb-1 job-title" id="postularTitulo"></h5>
+                                <div class="text-white small job-meta" id="postularUbicacion"></div>
+                                <div class="text-white small job-meta" id="postularEmpresa"></div>
+                            </div>
+
+                        </div>
+
+                        <!-- DESCRIPCIÓN -->
+                        <div class="left-desc">
+                            <label class="form-label mb-1 text-muted">Descripción del empleo</label>
+                            <div id="postularDescripcion" class="desc-box small"></div>
+                        </div>
+
+                    </div>
+
+                    <!-- ===== COLUMNA DERECHA ===== -->
+                    <div class="col-lg-7 right-pane">
+
+                        <div class="right-body">
+
+                            <!-- Campos ocultos -->
+                            <input type="hidden" id="postular_id_empleo" name="id_empleo">
+                            <input type="hidden" id="postular_id_empresa" name="id_empresa">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-12">
+                                    <label class="form-label mb-1">Nombres y apellidos</label>
+                                    <input type="text" class="form-control" id="nombres_apellidos"
+                                        placeholder="Ej: Juan Pérez" required>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label mb-1">Cédula</label>
+                                    <input type="text" class="form-control" id="cedula"
+                                        placeholder="10 dígitos" required>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label mb-1">Correo</label>
+                                    <input type="email" class="form-control" id="correo"
+                                        placeholder="correo@dominio.com" required>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label mb-1">Teléfono</label>
+                                    <input type="text" class="form-control" id="telefono"
+                                        placeholder="Ej: 0999999999" required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label mb-1">Hoja de vida (PDF)</label>
+                                    <input type="file" class="form-control" id="cv_pdf" accept="application/pdf" required>
+                                    <small class="text-muted">Solo PDF. Tamaño recomendado: hasta 5MB.</small>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <!-- FOOTER BOTONES -->
+                        <div class="right-footer d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                Cerrar
+                            </button>
+
+                            <button type="button" class="btn btn-primary" onclick="enviarPostulacion()">
+                                <i class="fi-rs-paper-plane me-1"></i> Enviar postulación
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<?php
+include 'includes/footer.php';
+?>
+<script src="js/eventos.js"></script>
+
+<script>
+    /* ===== Estado global ===== */
+    let eventosPorPagina = 6;
+    let todosLosEventos = [];
+    let filtradosCache = [];
+
+    function parseMysqlDatetime(dtStr) {
+        if (!dtStr) return null;
+        return new Date(String(dtStr).replace(" ", "T"));
+    }
+
+    function isMembresiaActiva(item) {
+        const memb = item?.membresia;
+        if (!memb) return false;
+        const estado = (memb.estado_membresia || memb.estado || "").toString().toUpperCase();
+        if (estado && estado !== "ACTIVA") return false;
+        const now = new Date();
+        const inicio = parseMysqlDatetime(memb.fecha_inicio || "");
+        const fin = parseMysqlDatetime(memb.fecha_fin || "");
+        if (inicio && now.getTime() < inicio.getTime()) return false;
+        if (fin && now.getTime() > fin.getTime()) return false;
+        return true;
+    }
+
+    function filterByMembresiaActiva(items) {
+        return (items || []).filter(isMembresiaActiva);
+    }
+
+    // Estado seleccionado
+    let provinciaSel = {
+        id: null,
+        nombre: null
+    };
+    let cantonSel = {
+        id: null,
+        nombre: null
+    };
+    let catsIndex = null;
+    let datosEcuador = {};
+
+
+    fetch('provincia_canton_parroquia.json')
+        .then(res => res.json())
+        .then(data => {
+            datosEcuador = data;
+            cargarProvincias();
+        });
+
+
+    /* Estado de filtros */
+    const stateFiltros = {
+        subtipos: new Set(),
+        modalidad: new Set(),
+        tipoEntrada: new Set()
+    };
+
+    /* ===== Helpers ===== */
+    const norm = s => (s ?? '').toString().trim().toLowerCase();
+    const cap = s => (s ?? '').toString().trim().replace(/^\p{L}/u, c => c.toUpperCase());
+
+    function capitalizarPrimeraLetra(s) {
+        s = (s ?? '').toString().trim();
+        return s ? s[0].toUpperCase() + s.slice(1) : s;
+    }
+
+    function escapeHtml(str) {
+        return (str ?? '').toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function decodeHtmlEntities(str) {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = str ?? '';
+        return textarea.value;
+    }
+
+    function decodeUnicodeEscapes(str) {
+        if (typeof str !== 'string') return str ?? '';
+        try {
+            return JSON.parse(`"${str
+                .replace(/\\/g, '\\\\')
+                .replace(/"/g, '\\"')
+                .replace(/\r/g, '\\r')
+                .replace(/\n/g, '\\n')
+                .replace(/\t/g, '\\t')}"`);
+        } catch (_) {
+            return str;
+        }
+    }
+
+    function decodeRichText(str) {
+        return decodeUnicodeEscapes(decodeHtmlEntities((str ?? '').toString()));
+    }
+
+    function normalizarDescripcionHtml(html) {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = decodeRichText(html || '');
+        wrapper.querySelectorAll('*').forEach((el) => {
+            el.removeAttribute('style');
+            el.removeAttribute('class');
+        });
+        return wrapper.innerHTML;
+    }
+
+    function enviarPostulacion() {
+        // 1. Referencia al botón y su contenido original
+        const btn = document.querySelector('#modalPostular .btn-primary[onclick="enviarPostulacion()"]');
+        const originalHTML = btn.innerHTML;
+
+        var nombres_apellidos = $("#nombres_apellidos").val();
+        var postular_id_empleo = $("#postular_id_empleo").val();
+        var postular_id_empresa = $("#postular_id_empresa").val();
+        var cedula = $("#cedula").val();
+        var correo = $("#correo").val();
+        var telefono = $("#telefono").val();
+        var files = $("#cv_pdf")[0].files;
+
+        // Validación campos vacíos
+        if (!nombres_apellidos || !cedula || !correo || !telefono || !files.length) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Faltan datos',
+                text: 'Por favor complete todos los campos y adjunte su CV.'
+            });
+            return;
+        }
+
+        if (!validarCorreoElectronico(correo)) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Correo no válido',
+                text: 'Ingresa un correo electrónico válido.'
+            });
+            return;
+        }
+
+        // 2. ACTIVAR LOADING: Deshabilitar y poner Spinner
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...`;
+
+        const formData = new FormData();
+        Array.from(files).forEach(file => {
+            formData.append("archivos[]", file);
+        });
+
+        // Proceso de subida de PDF
+        fetch("cargar_pdf_cv.php", {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.response === "success") {
+                    // Registro del postulante en la base de datos
+                    $.post("api/v1/fulmuv/subirPostulante/create", {
+                        nombres_apellidos: nombres_apellidos,
+                        cedula: cedula,
+                        correo: correo,
+                        telefono: telefono,
+                        cv: data.data.archivos[0].archivo,
+                        postular_id_empleo: postular_id_empleo,
+                        postular_id_empresa: postular_id_empresa
+                    }, function(returnedData) {
+
+                        // 3. FINALIZAR LOADING (Éxito o Error de API)
+                        if (!returnedData.error) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'FULMUV',
+                                text: returnedData.msg,
+                                confirmButtonColor: "#242619"
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHTML;
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: returnedData.msg
+                            });
+                        }
+                    }, 'json').fail(() => {
+                        // Manejo de error en la petición POST
+                        btn.disabled = false;
+                        btn.innerHTML = originalHTML;
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Error de conexión con el servidor.'
+                        });
+                    });
+
+                } else {
+                    // Error al subir el PDF
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo subir el archivo PDF.'
+                    });
+                }
+            })
+            .catch(err => {
+                // 4. FINALIZAR LOADING (Error de Red)
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                console.error("Error:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error inesperado.'
+                });
+            });
+    }
+
+
+    function getEmpleoById(id) {
+        return todosLosEventos.find(e => String(e.id_empleo) === String(id));
+    }
+
+    /* ===== Construcción de filtros (sin repetidos) ===== */
+    function buildFiltros(data) {
+        // SUBTIPOS
+        const mapSubtipos = new Map();
+        data.forEach(ev => {
+            console.log(ev.subtipos)
+            if (Array.isArray(ev.subtipos) && ev.subtipos.length) {
+                ev.subtipos.forEach(s => {
+                    const id = Number(s.id);
+                    if (id > 0 && !mapSubtipos.has(id)) mapSubtipos.set(id, s.nombre);
+                });
+                return;
+            }
+            console.log(ev.subtipo_evento)
+            if (ev.subtipo_evento) {
+                let raw = String(ev.subtipo_evento).replaceAll('\\', '');
+                try {
+                    const arr = JSON.parse(raw);
+                    if (Array.isArray(arr)) {
+                        arr.forEach(idStr => {
+                            const id = Number(String(idStr).replace(/\D+/g, ''));
+                            if (id > 0 && !mapSubtipos.has(id)) mapSubtipos.set(id, 'Subtipo ' + id);
+                        });
+                    }
+                } catch (_) {}
+            }
+        });
+
+        // MODALIDAD
+        const setModalidad = new Set();
+        data.forEach(ev => {
+            const v = (ev.modalidad || '').toString().trim();
+            if (v) setModalidad.add(v);
+        });
+
+        // TIPO ENTRADA
+        const setTipoEnt = new Set();
+        data.forEach(ev => {
+            const v = (ev.tipo_entrada || '').toString().trim();
+            if (v) setTipoEnt.add(v);
+        });
+
+        // Render de grupos
+        renderCheckGroup('#filtro-subtipo',
+            [...mapSubtipos.entries()].map(([id, nombre]) => ({
+                id: 'sub_' + id,
+                name: 'flt-subtipo',
+                value: String(id),
+                label: nombre
+            }))
+        );
+        renderCheckGroup('#filtro-modalidad',
+            [...setModalidad].map(v => ({
+                id: 'mod_' + v,
+                name: 'flt-modalidad',
+                value: v,
+                label: capitalizarPrimeraLetra(v)
+            }))
+        );
+        renderCheckGroup('#filtro-tipo_entrada',
+            [...setTipoEnt].map(v => ({
+                id: 'ten_' + v,
+                name: 'flt-tipo-entrada',
+                value: v,
+                label: capitalizarPrimeraLetra(v)
+            }))
+        );
+
+        // Listeners
+        $('#filtro-subtipo').off('change').on('change', 'input[name="flt-subtipo"]', function() {
+            this.checked ? stateFiltros.subtipos.add(this.value) : stateFiltros.subtipos.delete(this.value);
+            filtrarYMostrar(1);
+        });
+        $('#filtro-modalidad').off('change').on('change', 'input[name="flt-modalidad"]', function() {
+            this.checked ? stateFiltros.modalidad.add(this.value) : stateFiltros.modalidad.delete(this.value);
+            filtrarYMostrar(1);
+        });
+        $('#filtro-tipo_entrada').off('change').on('change', 'input[name="flt-tipo-entrada"]', function() {
+            this.checked ? stateFiltros.tipoEntrada.add(this.value) : stateFiltros.tipoEntrada.delete(this.value);
+            filtrarYMostrar(1);
+        });
+    }
+
+    function renderCheckGroup(containerSel, items) {
+        const wrap = document.querySelector(containerSel);
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        items.forEach(it => {
+            wrap.insertAdjacentHTML('beforeend', `
+      <div class="form-check mb-1">
+        <input class="form-check-input" type="checkbox" id="${it.id}" name="${it.name}" value="${it.value}">
+        <label class="form-check-label" for="${it.id}">${it.label}</label>
+      </div>
+    `);
+        });
+    }
+
+    const modalPostularEl = document.getElementById('modalPostular');
+
+    function buildCarousel(images) {
+        const inner = document.getElementById('carouselEmpleoInner');
+        const indicators = document.getElementById('carouselEmpleoIndicators');
+        inner.innerHTML = '';
+        indicators.innerHTML = '';
+
+        if (!images.length) {
+            images = ['img/FULMUV-NEGRO.png'];
+        }
+
+        images.forEach((src, i) => {
+            inner.insertAdjacentHTML('beforeend', `
+            <div class="carousel-item ${i === 0 ? 'active' : ''}" style="--bg:url('${src}')">
+                <img src="${src}" class="d-block w-100"
+                    onerror="this.src='img/FULMUV-NEGRO.png'">
+            </div>
+            `);
+
+            indicators.insertAdjacentHTML('beforeend', `
+      <button type="button" data-bs-target="#carouselEmpleo" data-bs-slide-to="${i}"
+              class="${i === 0 ? 'active' : ''}" ${i === 0 ? 'aria-current="true"' : ''} aria-label="Slide ${i+1}"></button>
+    `);
+        });
+
+        // asegurar autoplay a 4s
+        const el = document.getElementById('carouselEmpleo');
+        // const instance = bootstrap.Carousel.getOrCreateInstance(el, {
+        //     interval: 4000,
+        //     ride: 'carousel',
+        //     pause: false,
+        //     touch: true,
+        //     wrap: true
+        // });
+        // instance.cycle();
+    }
+
+    if (modalPostularEl) {
+        modalPostularEl.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            if (!button) return;
+
+            // limpiar campos
+            document.getElementById('postular_id_empleo').value = "";
+            document.getElementById('postular_id_empresa').value = "";
+            document.getElementById('nombres_apellidos').value = "";
+            document.getElementById('cedula').value = "";
+            document.getElementById('correo').value = "";
+            document.getElementById('telefono').value = "";
+            document.getElementById('postularTitulo').textContent = "";
+            document.getElementById('postularDescripcion').innerHTML = "";
+
+            const idEmpleo = button.getAttribute('data-id') || '';
+            const titulo = button.getAttribute('data-titulo') || '';
+            const idEmpresa = button.getAttribute('data-id_empresa') || '';
+
+            document.getElementById('postular_id_empleo').value = idEmpleo;
+            document.getElementById('postular_id_empresa').value = idEmpresa;
+            document.getElementById('postularTitulo').textContent = titulo;
+
+            // Buscar empleo completo
+            const empleo = getEmpleoById(idEmpleo);
+
+            if (empleo) {
+                let htmlEmpresa = '';
+
+                // Validamos si es sucursal o empresa general
+                if (empleo.tipo_creador === 'sucursal') {
+                    // Si es sucursal, podrías incluso mostrar el nombre del cantón o un tag específico
+                    htmlEmpresa = `
+                        <span class="badge bg-info text-dark mb-2">
+                            <i class="fi-rs-shop me-1"></i> Sucursal: ${empleo.canton || 'Local'}
+                        </span>`;
+                } else {
+                    htmlEmpresa = `
+                        <span class="text-muted small">
+                            <i class="fi-rs-building me-1"></i> Empresa: ${empleo.empresa || 'General'}
+                        </span>`;
+                }
+
+                document.getElementById('postularEmpresa').innerHTML = htmlEmpresa;
+            }
+
+            // Descripción
+            if (empleo && empleo.descripcion) {
+                document.getElementById('postularDescripcion').innerHTML = normalizarDescripcionHtml(empleo.descripcion);
+            } else {
+                document.getElementById('postularDescripcion').textContent = 'Este empleo no tiene una descripción detallada.';
+            }
+
+            // Ubicación (tu data viene como string: "Bolívar", "Chillanes")
+            const prov = (empleo?.provincia || '').toString().trim();
+            const cant = (empleo?.canton || '').toString().trim();
+            const ubic = (prov || cant) ? `${prov}${prov && cant ? '; ' : ''}${cant}` : 'Sin ubicación';
+            document.getElementById('postularUbicacion').innerHTML = `<i class="fi-rs-marker me-1"></i>${ubic}`;
+
+            // Empresa (opcional)
+            if (empleo?.empresa) {
+                document.getElementById('postularEmpresa').innerHTML = `<i class="fi-rs-building me-1"></i>${empleo.empresa}`;
+            } else {
+                document.getElementById('postularEmpresa').innerHTML = '';
+            }
+
+            // Imágenes para el carrusel (frontal/posterior)
+            const imgs = [];
+            if (empleo?.img_frontal) imgs.push(`admin/${empleo.img_frontal}`);
+            if (empleo?.img_posterior && empleo.img_posterior !== empleo.img_frontal) imgs.push(`admin/${empleo.img_posterior}`);
+
+            buildCarousel(imgs);
+        });
+
+        // opcional: al cerrar, pausa carrusel para ahorrar recursos
+        modalPostularEl.addEventListener('hidden.bs.modal', function() {
+            const el = document.getElementById('carouselEmpleo');
+            const instance = bootstrap.Carousel.getInstance(el);
+            if (instance) instance.pause();
+        });
+    }
+
+    // Escuchar cambios en PROVINCIA
+    $('#selectProvincia').on('change', function() {
+        const codProv = this.value;
+
+        if (!codProv) {
+            // Sin provincia => limpiar todo
+            provinciaSel = {
+                id: null,
+                nombre: null
+            };
+            cantonSel = {
+                id: null,
+                nombre: null
+            };
+            resetSelectCanton();
+        } else {
+            provinciaSel.id = codProv;
+            provinciaSel.nombre = capitalizarPrimeraLetra(datosEcuador[codProv].provincia);
+
+            // Cargar cantones de esa provincia
+            resetSelectCanton();
+            cargarCantones(codProv);
+        }
+
+        actualizarUIUbicacionPersistir();
+        filtrarYMostrar(1); // filtra al instante
+    });
+
+    // Escuchar cambios en CANTÓN
+    $('#selectCanton').on('change', function() {
+        const codCanton = this.value;
+
+        if (!codCanton) {
+            cantonSel = {
+                id: null,
+                nombre: null
+            };
+        } else if (provinciaSel.id) {
+            cantonSel.id = codCanton;
+            cantonSel.nombre = capitalizarPrimeraLetra(
+                (datosEcuador[provinciaSel.id].cantones[codCanton] || {}).canton || ''
+            );
+        }
+
+        actualizarUIUbicacionPersistir();
+        filtrarYMostrar(1); // filtra al instante
+    });
+
+
+    // --- cargarProvincias ---
+    function cargarProvincias() {
+        const selectProvincia = document.getElementById("selectProvincia");
+        selectProvincia.innerHTML = '<option value="">Seleccione una provincia</option>';
+
+        Object.entries(datosEcuador).forEach(([codProv, objProv]) => {
+            const option = document.createElement("option");
+            option.value = codProv;
+            option.textContent = capitalizarPrimeraLetra(objProv.provincia);
+            selectProvincia.appendChild(option);
+        });
+
+        // Al cambiar provincia:
+        selectProvincia.addEventListener("change", (e) => {
+            const codProv = e.target.value || null;
+
+            if (!codProv) {
+                provinciaSel = {
+                    id: null,
+                    nombre: null
+                };
+                resetSelectCanton();
+                actualizarUIUbicacionPersistir();
+                filtrarYMostrar(1);
+                return;
+            }
+
+            provinciaSel.id = codProv;
+            provinciaSel.nombre = capitalizarPrimeraLetra(datosEcuador[codProv].provincia);
+
+            resetSelectCanton();
+            cargarCantones(codProv);
+            actualizarUIUbicacionPersistir();
+            filtrarYMostrar(1);
+        });
+    }
+
+    // --- cargarCantones ---
+    function cargarCantones(codProvincia) {
+        const selectCanton = document.getElementById("selectCanton");
+        selectCanton.innerHTML = '<option value="">Seleccione un cantón</option>';
+
+        if (!codProvincia || !datosEcuador[codProvincia]) {
+            resetSelectCanton();
+            return;
+        }
+
+        const cantones = datosEcuador[codProvincia].cantones || {};
+        Object.entries(cantones).forEach(([codCanton, objCanton]) => {
+            const option = document.createElement("option");
+            option.value = codCanton;
+            option.textContent = capitalizarPrimeraLetra(objCanton.canton);
+            selectCanton.appendChild(option);
+        });
+
+        // Al cambiar cantón:
+        selectCanton.addEventListener("change", (e) => {
+            const codCanton = e.target.value || null;
+
+            if (!codCanton) {
+                cantonSel = {
+                    id: null,
+                    nombre: null
+                };
+                actualizarUIUbicacionPersistir();
+                filtrarYMostrar(1);
+                return;
+            }
+
+            const nombre = capitalizarPrimeraLetra(
+                (datosEcuador[codProvincia].cantones[codCanton] || {}).canton || ""
+            );
+            cantonSel.id = codCanton;
+            cantonSel.nombre = nombre;
+
+            actualizarUIUbicacionPersistir();
+            filtrarYMostrar(1);
+        });
+    }
+
+    // --- Guardar ubicación (botón "Listo") ---
+    document.getElementById('guardarUbicacion').addEventListener('click', function() {
+        const selProv = document.getElementById('selectProvincia').value || '';
+        const selCant = document.getElementById('selectCanton').value || '';
+
+        // Si el usuario abrió el modal pero no disparó "change", aseguramos estado:
+        if (selProv) {
+            provinciaSel.id = selProv;
+            provinciaSel.nombre = capitalizarPrimeraLetra(datosEcuador[selProv].provincia);
+        } else {
+            provinciaSel = {
+                id: null,
+                nombre: null
+            };
+        }
+
+        if (selCant && selProv) {
+            cantonSel.id = selCant;
+            cantonSel.nombre = capitalizarPrimeraLetra(
+                (datosEcuador[selProv].cantones[selCant] || {}).canton || ""
+            );
+        } else {
+            cantonSel = {
+                id: null,
+                nombre: null
+            };
+        }
+
+        actualizarUIUbicacionPersistir();
+        filtrarYMostrar(1); // <--- re-filtra por provincia/cantón al guardar
+
+        // Cerrar modal
+        const modalEl = document.getElementById('modalUbicacion');
+        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        modal.hide();
+    });
+
+    // --- Limpiar ubicación ---
+    document.getElementById('limpiarUbicacion').addEventListener('click', function() {
+        document.getElementById('selectProvincia').value = '';
+        resetSelectCanton();
+        provinciaSel = {
+            id: null,
+            nombre: null
+        };
+        cantonSel = {
+            id: null,
+            nombre: null
+        };
+
+        actualizarUIUbicacionPersistir();
+        filtrarYMostrar(1);
+    });
+
+    function actualizarUIUbicacionPersistir() {
+        const btn = document.getElementById('btnUbicacion');
+        if (btn) btn.innerHTML = `<i class="fi-rs-marker me-1"></i> ${labelUbicacion()}`;
+
+        // (opcional) persistir
+        localStorage.setItem('ubicacionSeleccionada', JSON.stringify({
+            provincia: provinciaSel,
+            canton: cantonSel
+        }));
+    }
+
+    function resetSelectCanton() {
+        const selectCanton = document.getElementById("selectCanton");
+        selectCanton.innerHTML = '<option value="">Seleccione un cantón</option>';
+        cantonSel = {
+            id: null,
+            nombre: null
+        };
+    }
+
+    function labelUbicacion() {
+        if (provinciaSel.nombre && cantonSel.nombre)
+            return `PROVINCIA: ${provinciaSel.nombre}; CANTÓN: ${cantonSel.nombre}`;
+        if (provinciaSel.nombre)
+            return `PROVINCIA: ${provinciaSel.nombre}`;
+        return 'Cambiar ubicación';
+    }
+
+
+
+    function filtrarActual() {
+        const q = norm(document.querySelector('.widget_search input[type="text"]')?.value || '');
+        let data = todosLosEventos.slice();
+        data = data.filter(isEmpleoVigente);
+
+
+        if (q) {
+            data = data.filter(e => {
+                const titulo = norm(e.titulo);
+                const provincia = norm(e.provincia);
+                const canton = norm(e.canton);
+
+                // Busca coincidencias en título, provincia o cantón
+                return titulo.includes(q) || provincia.includes(q) || canton.includes(q);
+            });
+        }
+
+        if (provinciaSel.nombre)
+            data = data.filter(e => norm(e.provincia) === norm(provinciaSel.nombre));
+        if (cantonSel.nombre)
+            data = data.filter(e => norm(e.canton) === norm(cantonSel.nombre));
+
+        if (stateFiltros.modalidad.size) {
+            data = data.filter(e => stateFiltros.modalidad.has((e.modalidad || '').toString().trim()));
+        }
+        if (stateFiltros.tipoEntrada.size) {
+            data = data.filter(e => stateFiltros.tipoEntrada.has((e.tipo_entrada || '').toString().trim()));
+        }
+        if (stateFiltros.subtipos.size) {
+            data = data.filter(e => {
+                let ids = [];
+                if (Array.isArray(e.subtipos) && e.subtipos.length) {
+                    ids = e.subtipos.map(s => String(s.id));
+                } else if (e.subtipo_evento) {
+                    let raw = String(e.subtipo_evento).replaceAll('\\', '');
+                    try {
+                        const arr = JSON.parse(raw);
+                        if (Array.isArray(arr))
+                            ids = arr.map(x => String(Number(String(x).replace(/\D+/g, ''))));
+                    } catch (_) {}
+                }
+                return ids.some(id => stateFiltros.subtipos.has(String(id)));
+            });
+        }
+
+        return data;
+    }
+
+    function mostrarEventosPagina(pagina = 1) {
+        const inicio = (pagina - 1) * eventosPorPagina;
+        const fin = inicio + eventosPorPagina;
+        const eventosPagina = filtradosCache.slice(inicio, fin);
+
+        const cont = $("#listaEmpleos");
+        cont.empty();
+
+        if (!eventosPagina.length) {
+            cont.html('<div class="col-12 text-center py-5"><img src="img/no-results.png" style="width:150px; opacity:0.5;"><p class="mt-3 text-muted">No encontramos vacantes vigentes en este momento.</p></div>');
+            return;
+        }
+
+        eventosPagina.forEach(ev => {
+            const imgFront = ev.img_frontal ? `admin/${ev.img_frontal}` : 'img/placeholder-job.png';
+            const imgBack = ev.img_posterior ? `admin/${ev.img_posterior}` : imgFront;
+            const ubicacion = `${ev.provincia || ''} ${ev.canton ? ' - ' + ev.canton : ''}`;
+            const descripcionDecodificada = decodeRichText(ev.descripcion || '');
+            const resumen = descripcionDecodificada ? descripcionDecodificada.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() : '';
+            const fechaInicio = ev.fecha_inicio ? new Date(`${ev.fecha_inicio}T00:00:00`).toLocaleDateString('es-EC') : 'Inmediata';
+
+            // Formatear fecha de cierre para el usuario
+            const fechaCierre = ev.fecha_fin ? new Date(`${ev.fecha_fin}T00:00:00`).toLocaleDateString('es-EC') : 'Indefinida';
+
+            cont.append(`
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                <div class="card card-empleo h-100">
+                    <div class="empleo-media">
+                        <img src="${imgFront}" class="card-img-top empleo-img" 
+                             data-front="${imgFront}" data-back="${imgBack}">
+                        <span class="empleo-badge-top">Vigente</span>
+                    </div>
+                    
+                    <div class="card-body empleo-card-body d-flex flex-column">
+                        <div class="mb-2">
+                            <span class="empleo-chip"><i class="fi-rs-marker mr-5"></i>${escapeHtml(ubicacion || 'Sin ubicación')}</span>
+                        </div>
+                        
+                        <h5 class="card-title mb-2">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modalPostular" data-id="${ev.id_empleo}" data-titulo="${ev.titulo.replace(/"/g, '&quot;')}">
+                                ${escapeHtml(ev.titulo)}
+                            </a>
+                        </h5>
+
+                        <p class="empleo-resumen">
+                            ${escapeHtml(resumen ? (resumen.length > 135 ? `${resumen.substring(0, 135)}...` : resumen) : 'Sin descripción disponible.')}
+                        </p>
+
+                        <div class="empleo-meta-grid mt-auto">
+                            <div class="empleo-meta-item">
+                                <span class="empleo-meta-label">Inicio</span>
+                                <span class="empleo-meta-value">${fechaInicio}</span>
+                            </div>
+                            <div class="empleo-meta-item">
+                                <span class="empleo-meta-label">Cierre</span>
+                                <span class="empleo-meta-value text-danger">${fechaCierre}</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-3">
+                            <button class="btn btn-primary btn-sm btn-postular"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalPostular"
+                                data-id="${ev.id_empleo}"
+                                data-id_empresa="${ev.id_empresa}"
+                                data-titulo="${ev.titulo.replace(/"/g, '&quot;')}">
+                                Aplicar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+        });
+    }
+
+
+    // Cambiar a img_posterior al pasar el cursor y volver a img_frontal al salir
+    $(document).on('mouseenter', '.empleo-img', function() {
+        const back = $(this).data('back');
+        if (back) {
+            $(this).attr('src', back);
+        }
+    });
+
+    $(document).on('mouseleave', '.empleo-img', function() {
+        const front = $(this).data('front');
+        if (front) {
+            $(this).attr('src', front);
+        }
+    });
+
+    function generarPaginacion(totalPaginas, paginaActual) {
+        const pag = $("#paginacionEventos");
+        pag.html("");
+
+        const prevDisabled = (paginaActual === 1) ? "disabled" : "";
+        pag.append(`
+            <li class="page-item ${prevDisabled}">
+                <a class="page-link" href="#" data-page="${paginaActual-1}">
+                    <i class="fi-rs-arrow-small-left"></i>
+                </a>
+            </li>`);
+
+        for (let i = 1; i <= totalPaginas; i++) {
+            pag.append(`
+                <li class="page-item ${i===paginaActual?'active':''}">
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>`);
+        }
+
+        const nextDisabled = (paginaActual === totalPaginas) ? "disabled" : "";
+        pag.append(`
+            <li class="page-item ${nextDisabled}">
+                <a class="page-link" href="#" data-page="${paginaActual+1}">
+                    <i class="fi-rs-arrow-small-right"></i>
+                </a>
+            </li>`);
+    }
+
+    $(document).on("click", "#paginacionEventos .page-link", function(e) {
+        e.preventDefault();
+        const page = parseInt($(this).data("page"), 10);
+        const total = Math.max(1, Math.ceil(filtradosCache.length / eventosPorPagina));
+        if (page >= 1 && page <= total) {
+            mostrarEventosPagina(page);
+            generarPaginacion(total, page);
+        }
+    });
+
+    /* Filtrar + render maestro */
+    function filtrarYMostrar(pagina = 1) {
+        filtradosCache = filtrarActual();
+        $("#totalProductosGeneral").text(filtradosCache.length);
+        mostrarEventosPagina(pagina);
+        generarPaginacion(Math.max(1, Math.ceil(filtradosCache.length / eventosPorPagina)), pagina);
+    }
+
+    /* Buscar por título (input) */
+    const searchInput = document.querySelector('.widget_search input[type="text" ]');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => filtrarYMostrar(1));
+        searchInput.closest('form')?.addEventListener('submit', e => e.preventDefault());
+    }
+
+    /* “Show” (cantidad por página) */
+    $('.sort-show a').on('click', function(e) {
+        e.preventDefault();
+        const val = $(this).data('value');
+        if (val === 'all') eventosPorPagina = Number.MAX_SAFE_INTEGER;
+        else eventosPorPagina = parseInt(val, 10) || 6;
+        filtrarYMostrar(1);
+    });
+
+    /* ======= CARGA INICIAL DE EVENTOS ======= */
+    $.get('api/v1/fulmuv/empleosAll/all', function(ret) {
+        if (!ret.error && Array.isArray(ret.data)) {
+            todosLosEventos = filterByMembresiaActiva(ret.data || []);
+
+            // 1) Construir filtros con el dataset completo
+            buildFiltros(todosLosEventos);
+
+            // 2) Primer render de la grilla + paginación
+            filtrarYMostrar(1);
+        } else {
+            $(".loop-grid").html('<p class="text-danger">No se encontraron empleos disponibles.</p>');
+        }
+    }, 'json');
+
+    // Convierte a Título: Cada palabra con primera mayúscula
+    function toTitleCaseWords(str) {
+        return (str ?? '')
+            .toLowerCase()
+            .split(' ')
+            .filter(Boolean)
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+    }
+
+    const inputNombres = document.getElementById('nombres_apellidos');
+
+    if (inputNombres) {
+        inputNombres.addEventListener('input', function() {
+            let valor = this.value;
+
+            // Solo letras, espacios y tildes/ñ
+            valor = valor.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ\s]/g, '');
+
+            // Quitar espacios duplicados
+            valor = valor.replace(/\s{2,}/g, ' ');
+
+            // ✅ NO trim aquí (para permitir el espacio mientras escribe)
+            this.value = valor;
+        });
+
+
+    }
+
+    ['cedula', 'telefono'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', function() {
+            // Eliminar todo lo que no sea dígito
+            this.value = this.value.replace(/\D/g, '');
+        });
+    });
+
+
+    function validarCorreoElectronico(correo) {
+        const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return regexCorreo.test(correo);
+    }
+
+    function parseFechaLocalYYYYMMDD(s) {
+        if (!s) return null;
+        // acepta "YYYY-MM-DD" o "YYYY-MM-DD HH:MM:SS"
+        const d = String(s).trim().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+        // local time (Ecuador)
+        const [y, m, day] = d.split('-').map(Number);
+        return new Date(y, m - 1, day, 0, 0, 0);
+    }
+
+    function isEmpleoVigente(ev) {
+        const ahora = new Date();
+        ahora.setHours(12, 0, 0, 0);
+
+        const fechaInicio = parseFechaLocalYYYYMMDD(ev.fecha_inicio);
+        const fechaFinBase = parseFechaLocalYYYYMMDD(ev.fecha_fin);
+        const fechaFin = fechaFinBase ? new Date(fechaFinBase.getFullYear(), fechaFinBase.getMonth(), fechaFinBase.getDate(), 23, 59, 59) : null;
+
+        if (fechaInicio && ahora < fechaInicio) return false;
+        if (fechaFin && ahora > fechaFin) return false;
+
+        return !!(fechaInicio || fechaFin);
+    }
+</script>

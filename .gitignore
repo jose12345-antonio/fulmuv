@@ -1,0 +1,31 @@
+# Dependencias
+vendor/
+node_modules/
+
+# Variables de entorno / configuración local
+.env
+.env.*
+config.local.php
+
+# Logs y caché
+*.log
+cache/
+tmp/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Archivos subidos por usuarios (no versionar binarios pesados)
+uploads/
+
+# Archivos grandes (superan límite de GitHub)
+db_fulmuv.sql
+*.zip
+*.fig
