@@ -1,3 +1,20 @@
+function formatPrecioSuperscript(valor) {
+    const num = Number(valor) || 0;
+    const entero = Math.floor(num);
+    const centavos = Math.round((num - entero) * 100).toString().padStart(2, '0');
+    const enteroFormateado = entero.toLocaleString('es-EC');
+    return `<span style="font-size:0.6em;font-weight:400;vertical-align:middle;margin-right:1px;">US$</span><strong>${enteroFormateado}</strong><span style="font-size:0.55em;font-weight:400;position:relative;top:-0.4em;margin-left:1px;">,${centavos}</span>`;
+}
+
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 /* ====================== Estado global ====================== */
 let itemsPerPage = 20;
 let currentPage = 1;
@@ -69,7 +86,7 @@ $(document).ready(function () {
     // ✅ 1 sola carga (base)
     $.get("api/v1/fulmuv/serviciosProductos/All", function (returnedData) {
         if (returnedData && returnedData.error === false) {
-            productosData = returnedData.data || [];
+            productosData = shuffleArray(returnedData.data || []);
 
             // Construye índice base de categorías/subcats a partir de dataset (luego se reconstruye por ubicación)
             refreshAllUIFromCurrentState(true);
@@ -778,7 +795,7 @@ function renderEmpresas(data, page = 1) {
 
           <div class="product-content-wrap p-1">
             ${verificacion}
-            <h2 class="text-center">
+            <h2 class="text-center" style="font-weight:normal;">
               <a href="detalle_productos.php?q=${productos.id_producto}" target="_blank" rel="noopener noreferrer"
                  onclick="irADetalleProductoConTerminos(${productos.id_producto}); return false;"
                  class="limitar-lineas mt-1">
@@ -786,8 +803,8 @@ function renderEmpresas(data, page = 1) {
               </a>
             </h2>
             <div class="product-price mb-2 mt-0 text-center">
-              <span>${window.formatoMoneda.format(tieneDescuento ? precioDescuento : precioRef)}</span>
-              ${tieneDescuento ? `<span class="old-price">${window.formatoMoneda.format(precioRef)}</span>` : ''}
+              <span>${formatPrecioSuperscript(tieneDescuento ? precioDescuento : precioRef)}</span>
+              ${tieneDescuento ? `<span class="old-price">${formatPrecioSuperscript(precioRef)}</span>` : ''}
             </div>
           </div>
         </div>

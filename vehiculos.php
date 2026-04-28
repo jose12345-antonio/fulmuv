@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 ?>
 <link rel="canonical" href="https://fulmuv.com/vehiculos.php">
 
@@ -318,4 +319,4 @@ include 'includes/header.php';
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/vehiculos.js?v2.1.1"></script>
+<script src="js/vehiculos.js?v=<?php echo $timer; ?>"></script>

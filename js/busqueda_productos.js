@@ -804,7 +804,7 @@ function renderSearchCard(item) {
                 </div>
                 <div class="product-content-wrap d-flex flex-column flex-grow-1 text-center px-2 pb-3">
                     <div class="small text-muted mb-1">${verified ? "✓ Vendedor Verificado" : "&nbsp;"}</div>
-                    <h6 class="limitar-lineas mb-2 mt-1">
+                    <h6 class="limitar-lineas mb-2 mt-1" style="font-weight:700;">
                         <a href="${href}" target="_blank" rel="noopener noreferrer" onclick="${config.detailAction(item)}">${escapeHtml(title)}</a>
                     </h6>
                     <div class="small text-muted limitar-lineas mb-2">${escapeHtml(subtitle || " ")}</div>
@@ -1265,16 +1265,16 @@ function buildAdminImage(path) {
     return `admin/${src.replace(/^\/+/, "")}`;
 }
 
+function formatPrecioSuperscript(valor) {
+    const num = Number(valor) || 0;
+    const entero = Math.floor(num);
+    const centavos = Math.round((num - entero) * 100).toString().padStart(2, '0');
+    const enteroFormateado = entero.toLocaleString('es-EC');
+    return `<span style="font-size:0.6em;font-weight:400;vertical-align:middle;margin-right:1px;">US$</span><strong>${enteroFormateado}</strong><span style="font-size:0.55em;font-weight:400;position:relative;top:-0.4em;margin-left:1px;">,${centavos}</span>`;
+}
+
 function formatCurrency(value) {
-    const number = Number(value || 0);
-    if (typeof formatoMoneda !== "undefined" && formatoMoneda && typeof formatoMoneda.format === "function") {
-        return formatoMoneda.format(number);
-    }
-    return new Intl.NumberFormat("es-EC", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 2
-    }).format(number);
+    return formatPrecioSuperscript(value);
 }
 
 function escapeHtml(value) {

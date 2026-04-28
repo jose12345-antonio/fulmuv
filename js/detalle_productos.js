@@ -1,5 +1,12 @@
 var id_producto = $("#id_producto").val()
 let subcategoriasSeleccionadas = [];
+
+function formatPrecioSuperscript(valor) {
+    const num = parseFloat(valor) || 0;
+    const entero = Math.floor(num);
+    const decimales = Math.round((num - entero) * 100).toString().padStart(2, '0');
+    return `<span style="font-size:0.6em;vertical-align:super;">US$</span><strong>${entero.toLocaleString('es-EC')}</strong><sup style="font-size:0.6em;top:-0.4em;">${decimales}</sup>`;
+}
 let vistaDetalleRegistrada = false;
 let tipoInteraccionGlobal = "producto";
 
@@ -188,7 +195,7 @@ $(document).ready(function () {
             const precioDescuento = returnedData.data.precio_referencia - (returnedData.data.precio_referencia * returnedData.data.descuento / 100);
 
             $(".title-detail").text(capitalizarPrimeraLetra(returnedData.data.titulo_producto))
-            $(".current-price").text(formatoMoneda.format(tieneDescuento ? precioDescuento : returnedData.data.precio_referencia))
+            $(".current-price").html(formatPrecioSuperscript(tieneDescuento ? precioDescuento : returnedData.data.precio_referencia))
 
             if (returnedData.data.descuento != 0) {
 
@@ -508,97 +515,18 @@ $(document).ready(function () {
             });
 
             $.post("api/v1/fulmuv/categorias/productos", {
-                // Enviamos como array JSON para que el PHP lo procese correctamente
                 id_categoria: returnedData.data.id_categoria,
                 id_empresa: returnedData.data.id_empresa
             }, function (returnedDataProducto) {
 
-                if (!returnedDataProducto.error && returnedDataProducto.data.length > 0) {
-                    let container = $("#carausel-4-columns-oferta");
-
-                    // Destruir slick si ya existía para evitar conflictos al recargar
-                    if (container.hasClass('slick-initialized')) {
-                        container.slick('unslick');
-                    }
-
-                    container.empty();
-
-                    returnedDataProducto.data.forEach(function (producto) {
-                        if (id_producto != producto.id_producto) {
-                            // Validaciones de seguridad para evitar "reading 'nombre' of undefined"
-                            const nombreProd = producto.nombre ?? "Producto sin nombre";
-                            const imgFrontal = producto.img_frontal ?? "";
-                            const imgPosterior = producto.img_posterior ?? imgFrontal;
-
-                            // 1) Verificar que exista y sea un array
-                            if (Array.isArray(producto.verificacion) && producto.verificacion.length > 0) {
-                                // 2) Verificar que el primer elemento tenga la propiedad verificado en 1
-                                if (producto.verificacion[0].verificado == 1) {
-                                    verificacion = `
-                                <span class="fw-bold product-category" style="font-size: 12px;">
-                                    <i class="fi-rs-check ms-1"></i> Vendedor Verificado
-                                </span>`;
-                                }
-                            }
-
-                            const tieneDescuento = parseFloat(producto.descuento) > 0;
-                            const precioRef = parseFloat(producto.precio_referencia) || 0;
-                            const precioDescuento = precioRef - (precioRef * (parseFloat(producto.descuento) || 0) / 100);
-
-                            container.append(`
-                            <div class="product-cart-wrap">
-                            <div class="product-img-action-wrap">
-                                <div class="product-img product-img-zoom">
-                                    <a onclick="irADetalleProductoConTerminos(${producto.id_producto}); return false;">
-                                        <img class="default-img" src="admin/${producto.img_frontal}" alt="" 
-                                            onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';" 
-                                            style="height: 150px; object-fit: contain;" />
-                                    </a>
-                                </div>
-
-                                ${tieneDescuento ? `
-                                    <div class="product-badges product-badges-position product-badges-mrg">
-                                        <span class="best">-${parseInt(producto.descuento)}%</span>
-                                    </div>` : ''}
-
-                                <!-- Botón flotante arriba derecha -->
-                                <div class="position-absolute top-0 end-0 m-2 d-none">
-                                    <button class="btn rounded-circle d-flex justify-content-center align-items-center p-0"
-                                        style="width: 40px; height: 40px;"
-                                        onclick="agregarProductoCarrito(${producto.id_producto}, '${producto.titulo_producto}', '${producto.precio_referencia}', '${producto.img_frontal}')">
-                                        <img alt="Carrito de compra" src="img/carrito_transparente.png"/>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="product-content-wrap p-1">
-                                <!-- Badge verificación -->
-                                <div class="text-end">${verificacion}</div>
-                                <h2 class="text-center">
-                                    <a onclick="irADetalleProductoConTerminos(${producto.id_producto}); return false;" class="limitar-lineas mt-1">
-                                        ${capitalizarPrimeraLetra(producto.titulo_producto)}
-                                    </a>
-                                </h2>
-                                <div class="product-price mb-2 mt-0 text-center">
-                                    <span>
-                                        ${formatoMoneda.format(tieneDescuento ? precioDescuento : producto.precio_referencia)}
-                                    </span>
-                                    ${tieneDescuento ? `<span class="old-price">${formatoMoneda.format(producto.precio_referencia)}</span>` : ''}
-                                </div>
-                            </div>
-                        </div>
-                        `);
-                        }
-                    });
-
-                    // âœ… INICIALIZAR SLICK FUERA DEL BUCLE
+                function initRelacionadosSlick(container) {
                     container.slick({
                         dots: false,
                         infinite: true,
                         speed: 1000,
                         arrows: true,
                         autoplay: true,
-                        slidesToShow: 5, // Ajustado a 4 para mejor visualización
+                        slidesToShow: 5,
                         slidesToScroll: 1,
                         prevArrow: '<div class="slider-btn slider-prev"><i class="fi-rs-arrow-small-left"></i></div>',
                         nextArrow: '<div class="slider-btn slider-next"><i class="fi-rs-arrow-small-right"></i></div>',
@@ -609,9 +537,70 @@ $(document).ready(function () {
                         ],
                         appendArrows: "#carausel-4-columns-oferta"
                     });
+                }
 
+                function renderProductosRelacionados(lista) {
+                    let container = $("#carausel-4-columns-oferta");
+                    if (container.hasClass('slick-initialized')) container.slick('unslick');
+                    container.empty();
+
+                    lista.forEach(function (producto) {
+                        const tieneDescuento = parseFloat(producto.descuento) > 0;
+                        const precioRef = parseFloat(producto.precio_referencia) || 0;
+                        const precioDesc = precioRef - (precioRef * (parseFloat(producto.descuento) || 0) / 100);
+                        let verificacionHtml = "";
+                        if (Array.isArray(producto.verificacion) && producto.verificacion.length > 0) {
+                            if (producto.verificacion[0].verificado == 1) {
+                                verificacionHtml = `<span class="fw-bold product-category" style="font-size: 12px;"><i class="fi-rs-check ms-1"></i> Vendedor Verificado</span>`;
+                            }
+                        }
+                        container.append(`
+                            <div class="product-cart-wrap">
+                                <div class="product-img-action-wrap">
+                                    <div class="product-img product-img-zoom">
+                                        <a onclick="irADetalleProductoConTerminos(${producto.id_producto}); return false;">
+                                            <img class="default-img" src="admin/${producto.img_frontal}" alt=""
+                                                onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';"
+                                                style="height: 150px; object-fit: contain;" />
+                                        </a>
+                                    </div>
+                                    ${tieneDescuento ? `<div class="product-badges product-badges-position product-badges-mrg"><span class="best">-${parseInt(producto.descuento)}%</span></div>` : ''}
+                                </div>
+                                <div class="product-content-wrap p-1">
+                                    <div class="text-end">${verificacionHtml}</div>
+                                    <h2 class="text-center">
+                                        <a onclick="irADetalleProductoConTerminos(${producto.id_producto}); return false;" class="limitar-lineas mt-1" style="font-weight:700;">
+                                            ${capitalizarPrimeraLetra(producto.titulo_producto)}
+                                        </a>
+                                    </h2>
+                                    <div class="product-price mb-2 mt-0 text-center">
+                                        <span>${formatPrecioSuperscript(tieneDescuento ? precioDesc : precioRef)}</span>
+                                        ${tieneDescuento ? `<span class="old-price">${formatoMoneda.format(precioRef)}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                    });
+
+                    initRelacionadosSlick(container);
+                }
+
+                const relacionados = (returnedDataProducto.data || []).filter(p => String(p.id_producto) !== String(id_producto));
+                const needed = 6 - relacionados.length;
+
+                if (needed <= 0) {
+                    renderProductosRelacionados(relacionados);
                 } else {
-                    $("#carausel-4-columns-oferta").html('<p class="text-muted ml-15">No hay productos relacionados disponibles.</p>');
+                    $.get("api/v1/fulmuv/productosAll/all", function (fallback) {
+                        const existingIds = new Set(relacionados.map(p => String(p.id_producto)));
+                        existingIds.add(String(id_producto));
+                        let extra = (fallback.data || []).filter(p => !existingIds.has(String(p.id_producto)));
+                        for (let i = extra.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [extra[i], extra[j]] = [extra[j], extra[i]];
+                        }
+                        renderProductosRelacionados([...relacionados, ...extra.slice(0, needed)]);
+                    }, 'json');
                 }
             }, 'json');
 

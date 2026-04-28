@@ -1,3 +1,12 @@
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 /* =================== ESTADO =================== */
 let itemsPerPage = 40, currentPage = 1, productosData = [];
 let sortOption = "todos", searchText = "";
@@ -171,7 +180,7 @@ $(document).ready(function () {
     $("#breadcrumb")?.append(`<a href="https://fulmuv.com/" rel="nofollow"><i class="fi-rs-home mr-5"></i>Home</a><span></span> Lista de Vehículos`);
     $.get("api/v1/fulmuv/vehiculos/All", {}, function (returnedData) {
         if (!returnedData.error) {
-            productosData = returnedData.data || [];
+            productosData = shuffleArray(returnedData.data || []);
             const maxPrecio = Math.max(...productosData.map(p => Number(p.precio_referencia) || 0));
             inicializarSlider(maxPrecio);
             buildMarcasYModelos(productosData);

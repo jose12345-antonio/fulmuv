@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 
 $search = $_GET["search"] ?? "";
 ?>
@@ -548,4 +549,4 @@ $search = $_GET["search"] ?? "";
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/busqueda_productos.js?v1.0.0.0.0.0.0.0.0.0.0.0.13.0"></script>
+<script src="js/busqueda_productos.js?v=<?php echo $timer; ?>"></script>

@@ -1,6 +1,13 @@
 var id_producto = $("#id_producto").val()
 let subcategoriasSeleccionadas = [];
 
+function formatPrecioSuperscript(valor) {
+    const num = parseFloat(valor) || 0;
+    const entero = Math.floor(num);
+    const decimales = Math.round((num - entero) * 100).toString().padStart(2, '0');
+    return `<span style="font-size:0.6em;vertical-align:super;">US$</span><strong>${entero.toLocaleString('es-EC')}</strong><sup style="font-size:0.6em;top:-0.4em;">${decimales}</sup>`;
+}
+
 function obtenerSessionKeyTracking() {
     const key = "fulmuv_tracking_session";
     let value = localStorage.getItem(key);
@@ -151,7 +158,7 @@ $(document).ready(function () {
             const precioDescuento = returnedData.data.precio_referencia - (returnedData.data.precio_referencia * returnedData.data.descuento / 100);
 
             $(".title-detail").text(capitalizarPrimeraLetra(returnedData.data.nombre))
-            $(".current-price").text(formatoMoneda.format(tieneDescuento ? precioDescuento : returnedData.data.precio_referencia))
+            $(".current-price").html(formatPrecioSuperscript(tieneDescuento ? precioDescuento : returnedData.data.precio_referencia))
 
             if (returnedData.data.descuento != 0) {
 
@@ -433,113 +440,94 @@ $(document).ready(function () {
                 id_empresa: returnedData.data.id_empresa
             }, function (returnedDataProducto) {
 
-                // 1. Validar que la respuesta sea exitosa y contenga datos
-                if (!returnedDataProducto.error && returnedDataProducto.data.length > 0) {
-                    let $slider = $('#carausel-4-columns-vehiculos');
-                    let itemsRenderizados = 0; // Contador para validar el filtro
-
-                    // 2. Resetear el slider si ya está inicializado
-                    if ($slider.hasClass('slick-initialized')) {
-                        $slider.slick('unslick');
-                    }
-
-                    $slider.empty();
-
-                    // 3. CORRECCIÓN: Iterar sobre 'returnedDataProducto.data', no sobre 'returnedData.data'
-                    returnedDataProducto.data.forEach(function (vehiculo) {
-
-                        // 4. FILTRO: No mostrar el vehículo que el usuario ya está viendo
-                        if (vehiculo.id_vehiculo != id_producto) {
-                            itemsRenderizados++;
-
-                            // Campos con Optional Chaining para evitar errores de 'undefined'
-                            const marca = vehiculo.marcaArray?.[0]?.nombre ?? "";
-                            const modelo = vehiculo.modeloArray?.nombre ?? vehiculo.titulo_producto ?? "";
-                            const anio = vehiculo.anio ?? "";
-                            const prov = firstFromJsonLike(vehiculo.provincia);
-                            const kms = formatKms(vehiculo.kilometraje);
-
-                            const precioRef = parseFloat(vehiculo.precio_referencia || 0);
-                            const desc = parseFloat(vehiculo.descuento || 0);
-                            const tieneDesc = desc > 0;
-                            const precioConDesc = tieneDesc ? (precioRef - (precioRef * desc / 100)) : precioRef;
-
-                            // 5. CORRECCIÓN: Declarar 'verificacionHtml' con 'let' para resetearla en cada ciclo
-                            let verificacionHtml = "";
-                            if (Array.isArray(vehiculo.verificacion) && vehiculo.verificacion.length > 0) {
-                                if (vehiculo.verificacion[0].verificado == 1) {
-                                    verificacionHtml = `
-                        <div class="text-end">
-                            <span class="fw-bold product-category" style="font-size: 11px;">
-                                <i class="fi-rs-check ms-1"></i> Verificado
-                            </span>
-                        </div>`;
-                                }
-                            }
-
-                            $slider.append(`
-                    <div class="product-cart-wrap">
-                        <div class="product-img-action-wrap text-center">
-                            <div class="product-img product-img-zoom">
-                                <a href="detalle_vehiculo.php?q=${vehiculo.id_vehiculo}" target="_blank" rel="noopener noreferrer">
-                                    <img class="default-img img-fluid mb-1"
-                                        src="admin/${vehiculo.img_frontal}" alt="${modelo}"
-                                        onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';"
-                                        style="object-fit: contain; width: 100%; height: 180px">
-                                </a>
-                            </div>
-                            ${tieneDesc ? `
-                            <div class="product-badges product-badges-position">
-                                <span class="best">-${parseInt(vehiculo.descuento)}%</span>
-                            </div>` : ''}
-                        </div>
-                        <div class="product-content-wrap p-2">
-                            <div class="brand small text-muted">${marca}</div>
-                            <a onclick="irADetalleVehiculoConTerminos(${vehiculo.id_vehiculo}); return false;">
-                                <h3 class="model" style="font-size: 14px; height: 38px; overflow: hidden;">${modelo}</h3>
-                            </a>
-                            <div class="year font-sm color-grey">${anio}</div>
-                            ${verificacionHtml}
-                            <hr class="my-1">
-                            <div class="meta-line font-xs color-grey">
-                                <i class="fi-rs-marker"></i> ${prov || '—'} | <i class="fi-rs-dashboard"></i> ${kms}
-                            </div>
-                            <div class="product-price text-center mt-2">
-                                <span class="text-brand">
-                                    ${formatoMoneda.format(tieneDesc ? precioConDesc : precioRef)}
-                                </span>
-                                ${tieneDesc ? `<br><span class="old-price" style="font-size: 11px;">${formatoMoneda.format(precioRef)}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `);
+                function buildVehiculoCard(vehiculo) {
+                    const marca = vehiculo.marcaArray?.[0]?.nombre ?? "";
+                    const modelo = vehiculo.modeloArray?.nombre ?? vehiculo.titulo_producto ?? "";
+                    const anio = vehiculo.anio ?? "";
+                    const prov = firstFromJsonLike(vehiculo.provincia);
+                    const kms = formatKms(vehiculo.kilometraje);
+                    const precioRef = parseFloat(vehiculo.precio_referencia || 0);
+                    const desc = parseFloat(vehiculo.descuento || 0);
+                    const tieneDesc = desc > 0;
+                    const precioConDesc = tieneDesc ? (precioRef - (precioRef * desc / 100)) : precioRef;
+                    let verificacionHtml = "";
+                    if (Array.isArray(vehiculo.verificacion) && vehiculo.verificacion.length > 0) {
+                        if (vehiculo.verificacion[0].verificado == 1) {
+                            verificacionHtml = `<div class="text-end"><span class="fw-bold product-category" style="font-size: 11px;"><i class="fi-rs-check ms-1"></i> Verificado</span></div>`;
                         }
-                    });
-
-                    // 6. Inicializar Slick solo si hay elementos filtrados
-                    if (itemsRenderizados > 0) {
-                        $slider.slick({
-                            dots: false,
-                            infinite: itemsRenderizados > 5,
-                            speed: 800,
-                            arrows: true,
-                            autoplay: true,
-                            slidesToShow: 5,
-                            slidesToScroll: 1,
-                            prevArrow: '<div class="slider-btn slider-prev"><i class="fi-rs-arrow-small-left"></i></div>',
-                            nextArrow: '<div class="slider-btn slider-next"><i class="fi-rs-arrow-small-right"></i></div>',
-                            responsive: [
-                                { breakpoint: 1200, settings: { slidesToShow: 4 } },
-                                { breakpoint: 1025, settings: { slidesToShow: 3 } },
-                                { breakpoint: 480, settings: { slidesToShow: 1 } }
-                            ]
-                        });
-                    } else {
-                        $slider.html('<p class="text-muted ml-15">No hay otros vehículos similares disponibles.</p>');
                     }
+                    return `
+                        <div class="product-cart-wrap">
+                            <div class="product-img-action-wrap text-center">
+                                <div class="product-img product-img-zoom">
+                                    <a href="detalle_vehiculo.php?q=${vehiculo.id_vehiculo}" target="_blank" rel="noopener noreferrer">
+                                        <img class="default-img img-fluid mb-1"
+                                            src="admin/${vehiculo.img_frontal}" alt="${modelo}"
+                                            onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';"
+                                            style="object-fit: contain; width: 100%; height: 180px">
+                                    </a>
+                                </div>
+                                ${tieneDesc ? `<div class="product-badges product-badges-position"><span class="best">-${parseInt(vehiculo.descuento)}%</span></div>` : ''}
+                            </div>
+                            <div class="product-content-wrap p-2">
+                                <div class="brand small text-muted">${marca}</div>
+                                <a onclick="irADetalleVehiculoConTerminos(${vehiculo.id_vehiculo}); return false;">
+                                    <h3 class="model" style="font-size: 14px; height: 38px; overflow: hidden; font-weight:700;">${modelo}</h3>
+                                </a>
+                                <div class="year font-sm color-grey">${anio}</div>
+                                ${verificacionHtml}
+                                <hr class="my-1">
+                                <div class="meta-line font-xs color-grey">
+                                    <i class="fi-rs-marker"></i> ${prov || '—'} | <i class="fi-rs-dashboard"></i> ${kms}
+                                </div>
+                                <div class="product-price text-center mt-2">
+                                    <span class="text-brand">${formatPrecioSuperscript(tieneDesc ? precioConDesc : precioRef)}</span>
+                                    ${tieneDesc ? `<br><span class="old-price" style="font-size: 11px;">${formatoMoneda.format(precioRef)}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
 
+                function renderVehiculosRelacionados(lista) {
+                    let $slider = $('#carausel-4-columns-vehiculos');
+                    if ($slider.hasClass('slick-initialized')) $slider.slick('unslick');
+                    $slider.empty();
+                    lista.forEach(v => $slider.append(buildVehiculoCard(v)));
+                    $slider.slick({
+                        dots: false,
+                        infinite: lista.length > 5,
+                        speed: 800,
+                        arrows: true,
+                        autoplay: true,
+                        slidesToShow: 5,
+                        slidesToScroll: 1,
+                        prevArrow: '<div class="slider-btn slider-prev"><i class="fi-rs-arrow-small-left"></i></div>',
+                        nextArrow: '<div class="slider-btn slider-next"><i class="fi-rs-arrow-small-right"></i></div>',
+                        responsive: [
+                            { breakpoint: 1200, settings: { slidesToShow: 4 } },
+                            { breakpoint: 1025, settings: { slidesToShow: 3 } },
+                            { breakpoint: 480, settings: { slidesToShow: 1 } }
+                        ]
+                    });
+                }
+
+                const relacionados = (returnedDataProducto.data || []).filter(v => String(v.id_vehiculo) !== String(id_producto));
+                const needed = 6 - relacionados.length;
+
+                if (needed <= 0) {
+                    renderVehiculosRelacionados(relacionados);
                 } else {
-                    $("#carausel-4-columns-vehiculos").html('<p class="text-muted ml-15">No se encontraron vehículos relacionados.</p>');
+                    $.get("api/v1/fulmuv/vehiculos/All", function (fallback) {
+                        const existingIds = new Set(relacionados.map(v => String(v.id_vehiculo)));
+                        existingIds.add(String(id_producto));
+                        let extra = (fallback.data || []).filter(v => !existingIds.has(String(v.id_vehiculo)));
+                        for (let i = extra.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [extra[i], extra[j]] = [extra[j], extra[i]];
+                        }
+                        renderVehiculosRelacionados([...relacionados, ...extra.slice(0, needed)]);
+                    }, 'json');
                 }
             }, 'json');
 

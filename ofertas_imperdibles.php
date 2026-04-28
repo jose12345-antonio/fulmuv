@@ -1,6 +1,6 @@
 <?php
 include 'includes/header.php';
-
+$timer = time();
 ?>
 <link rel="canonical" href="https://fulmuv.com/ofertas_imperdibles.php">
 
@@ -279,4 +279,4 @@ include 'includes/header.php';
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/ofertas_imperdibles.js?v1.0.0.0.0.0.0.0.0.0.1.1.0.6"></script>
+<script src="js/ofertas_imperdibles.js?v=<?php echo $timer; ?>"></script>

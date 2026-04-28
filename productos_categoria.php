@@ -1,6 +1,6 @@
 <?php
 include 'includes/header.php';
-
+$timer = time();
 $id_categoria = $_GET["q"];
 
 echo '<input type="hidden" placeholder="" id="id_categoria" class="form-control" value=' . $id_categoria . ' />';
@@ -258,4 +258,4 @@ echo '<input type="hidden" placeholder="" id="id_categoria" class="form-control"
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/productos_categoria.js?v1.0.0.0.0.0.0.0.0.0.1.1.0.20"></script>
+<script src="js/productos_categoria.js?v=<?php echo $timer; ?>"></script>

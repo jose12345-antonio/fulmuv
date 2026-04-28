@@ -1,6 +1,6 @@
 <?php
 include 'includes/header.php';
-
+$timer = time();
 ?>
 <link rel="canonical" href="https://fulmuv.com/productos_vendidos_hoy.php">
 
@@ -282,4 +282,4 @@ include 'includes/header.php';
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/productos_vendidos_hoy.js?v1.0.0.0.0.0.0.0.0.0.1.1.0.8"></script>
+<script src="js/productos_vendidos_hoy.js?v=<?php echo $timer; ?>"></script>

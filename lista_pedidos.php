@@ -1,103 +1,130 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 
 echo '<input type="hidden" placeholder="" id="id_cliente" class="form-control" value="' . $_SESSION["id_usuario"] . '" />';
 ?>
 <link rel="canonical" href="https://fulmuv.com/lista_pedidos.php">
 
 <style>
-    .card-file {
-        border: 1px solid #ccc;
-        padding: 10px;
-        text-align: center;
-        border-radius: 8px;
-        margin-bottom: 10px;
+    /* ── Sidebar ─────────────────────────────────────────── */
+    .dashboard-menu {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid rgba(0,78,96,.12);
+        box-shadow: 0 2px 12px rgba(0,78,96,.07);
+        overflow: hidden;
     }
+    .dashboard-menu .sidebar-title {
+        display: flex; align-items: center; gap: 10px;
+        padding: 16px 18px;
+        font-size: 14px; font-weight: 700; letter-spacing: .3px;
+        color: #fff;
+        background: linear-gradient(135deg, #016b84, #004E60);
+    }
+    .dashboard-menu .sidebar-title i { font-size: 16px; color: #FFDC2B; }
+    .dashboard-menu ul.nav { padding: 6px 0; }
+    .dashboard-menu .nav-item .nav-link {
+        display: flex; align-items: center; gap: 10px;
+        padding: 11px 18px;
+        font-size: 13px; font-weight: 600; color: #4a5568;
+        border-left: 3px solid transparent;
+        transition: all .15s;
+    }
+    .dashboard-menu .nav-item .nav-link:hover { background: rgba(0,78,96,.05); color: #004E60; }
+    .dashboard-menu .nav-item .nav-link.active {
+        background: rgba(0,78,96,.09); color: #004E60;
+        border-left-color: #004E60;
+    }
+    .dashboard-menu .nav-item .nav-link i { font-size: 14px; }
 
-    .card-file i {
-        font-size: 2rem;
-        color: #555;
+    /* ── Page header ─────────────────────────────────────── */
+    .lp-header {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 18px;
+        background: #fff;
+        border-radius: 14px 14px 0 0;
+        border-bottom: 1px solid rgba(0,78,96,.10);
     }
+    .lp-header h3 { margin: 0; font-size: 16px; font-weight: 800; color: #004E60; }
+    .lp-header .select-wrap { margin-left: auto; min-width: 380px; }
 
-    .card-file small {
-        display: block;
-        margin-top: 5px;
-        word-break: break-word;
-    }
-
-    .btn-sm {
-        padding: 2px 10px !important;
-    }
-
-    .dropzone {
-        border: 2px dashed #ccc;
-        background: #f5f5f5;
-        padding: 40px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-
-    .dropzone:hover {
-        background-color: #f0f0f0;
-    }
-
-    .dropzone .dz-message {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #666;
-    }
-
-    .dropzone .dz-message i {
-        margin-top: 10px;
-    }
-
-    .order-cards {
-        display: grid;
-        gap: 16px;
-    }
+    /* ── Order cards ─────────────────────────────────────── */
+    .order-cards { display: flex; flex-direction: column; gap: 16px; }
 
     .order-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        overflow: hidden;
-        background: #fff;
+        border-radius: 14px; overflow: hidden; background: #fff;
+        border: 1px solid rgba(0,78,96,.12);
+        box-shadow: 0 2px 14px rgba(0,78,96,.07);
+        transition: box-shadow .2s;
     }
+    .order-card:hover { box-shadow: 0 4px 22px rgba(0,78,96,.13); }
 
     .order-card .card-head {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        padding: 10px 14px;
-        background: #f8fafc;
+        display: flex; flex-wrap: wrap; gap: 10px 22px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #004E60 0%, #016b84 100%);
         align-items: center;
-        border-bottom: 1px solid #eef2f7;
     }
+    .order-card .card-head .kv { display: flex; flex-direction: column; }
+    .order-card .card-head .kv .k { font-size: 10px; color: rgba(255,255,255,.6); text-transform: uppercase; letter-spacing: .5px; }
+    .order-card .card-head .kv .v { font-size: 15px; font-weight: 700; color: #fff; }
+    .order-card .card-head .ms-auto { margin-left: auto; }
 
-    .order-card .kv .k {
-        font-size: 12px;
-        color: #6b7280;
-        margin-right: 6px;
+    .badge-estado {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 11px; border-radius: 20px;
+        font-size: 11px; font-weight: 700; letter-spacing: .2px;
     }
+    .badge-estado.s-creada    { background: rgba(255,255,255,.18); color: #fff; }
+    .badge-estado.s-procesada { background: #FFDC2B; color: #004E60; }
+    .badge-estado.s-enviada   { background: #90FFBD; color: #004E60; }
+    .badge-estado.s-entregada,.badge-estado.s-aprobada,.badge-estado.s-completada { background: #10b981; color: #fff; }
+    .badge-estado.s-cancelada,.badge-estado.s-eliminada { background: #ef4444; color: #fff; }
+    .badge-estado.s-pendiente { background: rgba(255,255,255,.18); color: #fff; }
+    .badge-estado.s-default   { background: rgba(255,255,255,.15); color: #fff; }
 
-    .order-card .kv .v {
-        font-weight: 600;
-        color: #111827;
+    /* ── Steps ───────────────────────────────────────────── */
+    .order-steps {
+        display: flex; align-items: flex-start;
+        padding: 10px 16px;
+        background: rgba(0,78,96,.03);
+        border-bottom: 1px solid rgba(0,78,96,.07);
+        overflow-x: auto;
     }
+    .order-step {
+        display: flex; flex-direction: column; align-items: center;
+        flex: 1; position: relative; min-width: 60px;
+    }
+    .order-step::before {
+        content: ''; position: absolute;
+        top: 9px; left: calc(-50% + 10px); right: calc(50% + 10px);
+        height: 2px; background: #e5e7eb;
+    }
+    .order-step:first-child::before { display: none; }
+    .order-step.done::before  { background: #004E60; }
+    .order-step.active::before { background: linear-gradient(to right, #004E60, #FF6D01); }
+    .step-dot {
+        width: 20px; height: 20px; border-radius: 50%;
+        border: 2px solid #d1d5db; background: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 9px; color: #fff;
+        margin-bottom: 5px; z-index: 1; position: relative;
+    }
+    .order-step.done  .step-dot { background: #004E60; border-color: #004E60; }
+    .order-step.done  .step-dot::after { content: '✓'; }
+    .order-step.active .step-dot { background: #FF6D01; border-color: #FF6D01; box-shadow: 0 0 0 3px rgba(255,109,1,.18); }
+    .step-label { font-size: 10px; color: #9ca3af; text-align: center; white-space: nowrap; }
+    .order-step.done   .step-label { color: #004E60; font-weight: 600; }
+    .order-step.active .step-label { color: #FF6D01; font-weight: 700; }
 
+    /* ── Card body ───────────────────────────────────────── */
     .order-card .card-body {
-        display: flex;
-        gap: 14px;
-        padding: 14px;
+        display: flex; gap: 14px; padding: 14px 16px;
     }
-
     .order-left {
-        display: flex;
-        gap: 12px;
-        flex: 1 1 auto;
-        min-width: 0;
+        flex: 1 1 auto; min-width: 0;
+        display: flex; flex-direction: column;
     }
 
     .product-thumb {
@@ -108,123 +135,141 @@ echo '<input type="hidden" placeholder="" id="id_cliente" class="form-control" v
         border: 1px solid #eee;
     }
 
-    .order-info {
-        min-width: 0;
+    /* ── Select de orden ─────────────────────────────────── */
+    .lp-select-wrap .select2-container { width: 100% !important; }
+    .lp-select-wrap .select2-selection--single {
+        height: 40px !important; border-radius: 10px !important;
+        border: 2px solid rgba(0,78,96,.25) !important;
+        display: flex !important; align-items: center !important;
+        padding: 0 12px !important; background: #fff !important;
+    }
+    .lp-select-wrap .select2-selection__rendered {
+        line-height: 40px !important; font-size: 13px !important;
+        font-weight: 600 !important; color: #004E60 !important;
+        padding-left: 0 !important;
+    }
+    .lp-select-wrap .select2-selection__arrow {
+        height: 38px !important; right: 8px !important;
+    }
+    .lp-select-wrap .select2-selection__arrow b {
+        border-color: #004E60 transparent transparent !important;
+    }
+    .select2-dropdown {
+        border: 2px solid rgba(0,78,96,.2) !important;
+        border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,78,96,.12) !important;
+        overflow: hidden;
+    }
+    .select2-results__option { font-size: 13px !important; padding: 8px 14px !important; }
+    .select2-results__option--highlighted { background: #004E60 !important; color: #fff !important; }
+    .select2-search--dropdown input {
+        border: 1px solid rgba(0,78,96,.2) !important; border-radius: 6px !important;
+        font-size: 13px !important; padding: 6px 10px !important;
     }
 
-    .order-info h6 {
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-    }
-
-    .product-name {
-        font-weight: 700;
-        text-transform: uppercase;
-        color: #0f172a;
-    }
-
-    .meta {
-        font-size: 12px;
-        color: #6b7280;
-    }
+    /* ── Product list ────────────────────────────────────── */
+    .order-info { min-width: 0; flex: 1; }
+    .product-name { font-weight: 700; font-size: 13px; text-transform: uppercase; color: #0f172a; }
+    .meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
 
     .product-item {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        padding: 8px 0;
-        border-bottom: 1px solid #f1f5f9;
+        display: flex; gap: 12px; align-items: center;
+        padding: 10px 0; border-bottom: 1px solid #f1f5f9;
+    }
+    .product-item:last-of-type { border-bottom: 0; }
+    .product-thumb {
+        width: 60px; height: 60px; object-fit: cover;
+        border-radius: 10px; border: 1px solid #e5e7eb; flex-shrink: 0;
     }
 
-    .product-item:last-child {
-        border-bottom: 0;
+    /* ── Estado bar (debajo de productos) ────────────────── */
+    .estado-bar {
+        display: flex; justify-content: flex-end; align-items: center;
+        padding: 6px 0 2px;
     }
 
-    .order-right {
-        width: 240px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    /* ── Shipping box ────────────────────────────────────── */
+    .shipping-box {
+        border-radius: 10px; padding: 10px 12px; margin-top: 8px;
+        display: flex; gap: 10px; align-items: flex-start;
+        background: #f8fafc; border: 1px solid #e5e7eb;
     }
+    .shipping-box .sbox-icon { font-size: 16px; flex-shrink: 0; color: #6b7280; margin-top: 1px; }
+    .shipping-box .sbox-content { min-width: 0; }
+    .shipping-box .label  { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; font-weight: 600; margin-bottom: 3px; }
+    .shipping-box .amount { font-weight: 700; font-size: 17px; color: #111827; }
+    .shipping-box .note   { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .shipping-box.success { background: #f0fdf4; border-color: #86efac; }
+    .shipping-box.success .sbox-icon { color: #16a34a; }
+    .shipping-box.success .amount    { color: #15803d; }
+    .shipping-box.warning { background: #fffbeb; border-color: #fcd34d; }
+    .shipping-box.warning .sbox-icon { color: #d97706; }
+    .shipping-box.warning .amount    { color: #92400e; }
+    .shipping-box.info { background: rgba(0,78,96,.05); border-color: rgba(0,78,96,.2); }
+    .shipping-box.info .sbox-icon { color: #004E60; }
+    .shipping-box.info .amount { color: #004E60; }
 
-    .order-actions {
+    /* ── Card body: columna única ────────────────────────── */
+    .order-card .card-body {
+        padding: 14px 16px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        width: 100%;
-        max-width: 220px;
-        margin: 0 auto;
     }
-
-    .order-actions .btn {
+    .order-card .card-body .product-item {
         width: 100%;
     }
 
-    .badge-estado {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 8px;
-        font-size: 11px;
-        font-weight: 700;
+    /* ── Barra de acciones ───────────────────────────────── */
+    .order-actions-bar {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        padding: 10px 16px;
+        border-top: 1px solid #f1f5f9;
+        background: #fafbfc;
     }
-
-    /* ya tenías mapping en JS; aquí sólo un fallback neutro */
-    .badge-estado.bg-light {
-        background: #f1f5f9;
-        color: #111827;
+    .order-actions-bar .btn-action {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 7px 14px; border-radius: 8px;
+        font-size: 12px; font-weight: 600;
+        border: none; cursor: pointer; transition: opacity .15s, transform .1s;
+        white-space: nowrap;
     }
+    .order-actions-bar .btn-action:hover { opacity: .88; transform: translateY(-1px); }
+    .order-actions-bar .btn-action:active { transform: translateY(0); }
+    .btn-action-map    { background: rgba(0,78,96,.1); color: #004E60; }
+    .btn-action-pay    { background: #FF6D01; color: #fff; }
+    .btn-action-detail { background: #004E60; color: #fff; }
+    .btn-action-guide  { background: #FFDC2B; color: #004E60; }
 
+    /* ── Footer ──────────────────────────────────────────── */
     .order-footer {
-        padding: 10px 14px;
-        border-top: 1px solid #eef2f7;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        padding: 7px 16px; border-top: 1px solid #f1f5f9;
+        display: flex; justify-content: flex-end; align-items: center;
+        background: #f4fafe; gap: 8px;
     }
 
-    .modal {
-        z-index: 1060;
+    .modal { z-index: 1060; }
+    .modal-backdrop { z-index: 1055; }
+
+    /* ── Responsive ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+        .dashboard-content.pl-50 { padding-left: 0 !important; }
+        .order-card .card-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+        .order-card .card-head .ms-auto { margin-left: 0; }
+        .lp-header { flex-wrap: wrap; }
+        .lp-header .select-wrap { min-width: 100%; margin-left: 0; }
+    }
+    @media (max-width: 480px) {
+        .order-actions-bar .btn-action { flex: 1 1 calc(50% - 8px); justify-content: center; }
+        .product-thumb { width: 48px; height: 48px; }
     }
 
-    .modal-backdrop {
-        z-index: 1055;
-    }
-
-    .shipping-box {
-        border: 1px solid #e5e7eb;
-        background: #f8fafc;
-        border-radius: 10px;
-        padding: 12px 14px;
-        margin-top: 10px;
-    }
-
-    .shipping-box .label {
-        font-size: 12px;
-        color: #6b7280;
-        margin-bottom: 4px;
-    }
-
-    .shipping-box .amount {
-        font-weight: 800;
-        font-size: 14px;
-    }
-
-    .shipping-box .note {
-        font-size: 12px;
-        color: #6b7280;
-    }
-
-    .shipping-box.success {
-        background: #ecfdf5;
-        border-color: #10b981;
-    }
-
-    .shipping-box.success .amount {
-        color: #065f46;
-    }
+    /* ── Card Dropzone/File ──────────────────────────────── */
+    .card-file { border:1px solid #ccc; padding:10px; text-align:center; border-radius:8px; margin-bottom:10px; }
+    .card-file i { font-size:2rem; color:#555; }
+    .card-file small { display:block; margin-top:5px; word-break:break-word; }
+    .dropzone { border:2px dashed #ccc; background:#f5f5f5; padding:40px; border-radius:8px; cursor:pointer; transition:background-color .3s; }
+    .dropzone:hover { background-color:#f0f0f0; }
+    .dropzone .dz-message { display:flex; flex-direction:column; align-items:center; justify-content:center; color:#666; }
+    .dropzone .dz-message i { margin-top:10px; }
 
     .pago-card {
         margin: 0 auto;
@@ -347,33 +392,10 @@ echo '<input type="hidden" placeholder="" id="id_cliente" class="form-control" v
             align-items: flex-start;
         }
 
-        .order-info,
-        .meta,
-        .product-name {
-            white-space: normal !important;
-            word-break: break-word;
-            overflow-wrap: anywhere;
+        .order-info, .meta, .product-name {
+            white-space: normal !important; word-break: break-word; overflow-wrap: anywhere;
         }
-
-        /* Precio a la derecha: que baje si no cabe */
-        .product-item .ms-auto {
-            width: 100%;
-            text-align: right;
-            margin-top: 6px;
-        }
-    }
-
-    /* Extra para pantallas MUY pequeñas */
-    @media (max-width: 420px) {
-        .order-actions .btn {
-            flex: 1 1 100%;
-            /* 1 por fila */
-        }
-
-        .product-thumb {
-            width: 54px;
-            height: 54px;
-        }
+        .product-item .ms-auto { width: 100%; text-align: right; margin-top: 6px; }
     }
 </style>
 
@@ -383,21 +405,24 @@ echo '<input type="hidden" placeholder="" id="id_cliente" class="form-control" v
             <div class="row">
                 <div class="col-md-3">
                     <div class="dashboard-menu">
+                        <div class="sidebar-title">
+                            <i class="fi-rs-shopping-bag"></i> Mis Pedidos
+                        </div>
                         <ul class="nav flex-column" role="tablist">
                             <li class="nav-item">
-                                <a class="nav-link active" id="orders-tab" data-bs-toggle="tab" href="#orders" role="tab" aria-controls="orders" aria-selected="false"><i class="fi-rs-shopping-bag mr-10"></i>Pedidos Pendientes</a>
-                            </li>
-                            <!-- <li class="nav-item">
-                                <a class="nav-link" id="track-orders-tab" data-bs-toggle="tab" href="#track-orders" role="tab" aria-controls="track-orders" aria-selected="false"><i class="fi-rs-receipt mr-10"></i>Datos de Facturación</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="address-tab" data-bs-toggle="tab" href="#address" role="tab" aria-controls="address" aria-selected="true"><i class="fi-rs-marker mr-10"></i>Mi dirección a domicilio</a>
-                            </li> -->
-                            <li class="nav-item">
-                                <a class="nav-link" id="pedidos_entregados-tab" data-bs-toggle="tab" href="#pedidos_entregados" role="tab" aria-controls="pedidos_entregados" aria-selected="true"><i class="fi-rs-check mr-10"></i>Pedidos Entregados</a>
+                                <a class="nav-link active" id="orders-tab" data-bs-toggle="tab" href="#orders" role="tab">
+                                    <i class="fi-rs-time-past"></i> Pendientes
+                                </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" id="pedidos_cancelados-tab" data-bs-toggle="tab" href="#pedidos_cancelados" role="tab" aria-controls="pedidos_cancelados" aria-selected="true"><i class="fi-rs-trash mr-10"></i>Pedidos Cancelados</a>
+                                <a class="nav-link" id="pedidos_entregados-tab" data-bs-toggle="tab" href="#pedidos_entregados" role="tab">
+                                    <i class="fi-rs-check-circle"></i> Entregados
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="pedidos_cancelados-tab" data-bs-toggle="tab" href="#pedidos_cancelados" role="tab">
+                                    <i class="fi-rs-cross-circle"></i> Cancelados
+                                </a>
                             </li>
                         </ul>
                     </div>
@@ -405,23 +430,16 @@ echo '<input type="hidden" placeholder="" id="id_cliente" class="form-control" v
                 <div class="col-md-9">
                     <div class="tab-content account dashboard-content pl-50">
                         <div class="tab-pane fade active show" id="orders" role="tabpanel" aria-labelledby="orders-tab">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h3 class="mb-0 fw-bold">Tu Orden
-                                        <button class="btn btn-primary btn-md ms-2 d-none" data-bs-toggle="modal" data-bs-target="#modalPagoEnvio">
-                                            <i class="fi-rs-credit-card me-1"></i> Datos de Pago
-                                        </button>
-                                    </h3>
-                                    <div>
-                                        <select id="selectOrden" class="form-select" data-placeholder="Seleccione tu orden">
-
-                                        </select>
+                            <div class="card" style="border-radius:14px;overflow:hidden;border:1px solid rgba(0,78,96,.12);box-shadow:0 2px 14px rgba(0,78,96,.07);">
+                                <div class="lp-header">
+                                    <i class="fi-rs-shopping-bag" style="font-size:18px;color:#004E60;"></i>
+                                    <h3>Seguimiento de Pedido</h3>
+                                    <div class="select-wrap lp-select-wrap">
+                                        <select id="selectOrden" class="form-select" data-placeholder="Seleccione tu orden"></select>
                                     </div>
-
                                 </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <div id="cardsEmpresas" class="order-cards"></div>
+                                <div class="card-body p-3">
+                                    <div id="cardsEmpresas" class="order-cards"></div>
 
                                         <!-- <table class="table" id="tabla-productos">
                                             <thead>
@@ -784,7 +802,7 @@ echo '<input type="hidden" placeholder="" id="id_cliente" class="form-control" v
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/lista_pedidos.js?v1.0.0.0.0.0.0.0.0.0.0.2.2.0.0.13"></script>
+<script src="js/lista_pedidos.js?v=<?php echo $timer; ?>"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO-o5grVvaS5wwq6CFZ3-VBOMBzSclCEg"></script>
 
 <!-- Dropzone CSS -->

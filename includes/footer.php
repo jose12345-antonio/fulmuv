@@ -453,6 +453,9 @@
                     if (products?.length > 0) {
                         html += `<div class="px-3 pt-3 pb-2 fw-bold text-muted small">Búsquedas sugeridas</div>`;
                         products.slice(0, 10).forEach(p => {
+                            const precioP = Number(p.precio_referencia) || 0;
+                            const descP = Number(p.descuento) || 0;
+                            const precioFinalP = descP > 0 ? precioP * (1 - descP / 100) : precioP;
                             html += `
                                 <div class="resultado-item d-flex align-items-center border-bottom py-0 px-2"
                                     onclick="irADetalleProductoConTerminos(${p.id_producto})">
@@ -460,7 +463,8 @@
                                     style="width:50px;height:50px;object-fit:contain;" class="me-2"
                                     onerror="this.onerror=null;this.src='img/FULMUV LOGO-15.png';">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0" style="font-size:14px;">${capitalizarPrimeraLetra(p.titulo_producto || p.nombre || '')}</h6>
+                                    <h6 class="mb-0 fw-bold" style="font-size:14px;">${capitalizarPrimeraLetra(p.titulo_producto || p.nombre || '')}</h6>
+                                    ${precioP > 0 ? `<div class="product-price" style="font-size:14px;">${formatPrecioSuperscript(precioFinalP)}</div>` : ''}
                                 </div>
                                 </div>`;
                         });
@@ -470,6 +474,9 @@
                     if (services?.length > 0) {
                         html += `<div class="px-3 pt-3 pb-2 fw-bold text-muted small">Servicios relacionados</div>`;
                         services.slice(0, 10).forEach(s => {
+                            const precioS = Number(s.precio_referencia) || 0;
+                            const descS = Number(s.descuento) || 0;
+                            const precioFinalS = descS > 0 ? precioS * (1 - descS / 100) : precioS;
                             html += `
                                 <div class="resultado-item d-flex align-items-center border-bottom py-0 px-2"
                                     onclick="irADetalleProductoConTerminos(${s.id_producto})">
@@ -477,7 +484,8 @@
                                     style="width:50px;height:50px;object-fit:contain;" class="me-2"
                                     onerror="this.onerror=null;this.src='img/FULMUV LOGO-15.png';">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0" style="font-size:14px;">${capitalizarPrimeraLetra(s.titulo_producto || '')}</h6>
+                                    <h6 class="mb-0 fw-bold" style="font-size:14px;">${capitalizarPrimeraLetra(s.titulo_producto || '')}</h6>
+                                    ${precioS > 0 ? `<div class="product-price" style="font-size:14px;">${formatPrecioSuperscript(precioFinalS)}</div>` : ''}
                                 </div>
                                 </div>`;
                         });
@@ -503,8 +511,9 @@
                                     style="width:50px;height:50px;object-fit:cover;" class="me-2"
                                     onerror="this.onerror=null;this.src='img/FULMUV LOGO-15.png';">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0" style="font-size:14px;">${capitalizarPrimeraLetra(titulo)}</h6>
+                                    <h6 class="mb-0 fw-bold" style="font-size:14px;">${capitalizarPrimeraLetra(titulo)}</h6>
                                     ${sub ? `<small class="text-muted">${sub}</small>` : ``}
+                                    ${Number(v.precio_referencia) > 0 ? `<div class="product-price" style="font-size:14px;">${formatPrecioSuperscript(Number(v.precio_referencia))}</div>` : ''}
                                 </div>
                                 </div>`;
                         });
@@ -521,7 +530,7 @@
                                     style="width:50px;height:50px;object-fit:cover;" class="me-2"
                                     onerror="this.onerror=null;this.src='img/FULMUV LOGO-15.png';">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0" style="font-size:14px;">${capitalizarPrimeraLetra(ev.titulo || '')}</h6>
+                                    <h6 class="mb-0 fw-bold" style="font-size:14px;">${capitalizarPrimeraLetra(ev.titulo || '')}</h6>
                                 </div>
                                 </div>`;
                         });
@@ -538,7 +547,7 @@
                                     style="width:50px;height:50px;object-fit:cover;" class="me-2"
                                     onerror="this.onerror=null;this.src='img/FULMUV LOGO-15.png';">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0" style="font-size:14px;">${capitalizarPrimeraLetra(j.titulo || '')}</h6>
+                                    <h6 class="mb-0 fw-bold" style="font-size:14px;">${capitalizarPrimeraLetra(j.titulo || '')}</h6>
                                 </div>
                                 </div>`;
                         });
@@ -1611,7 +1620,7 @@
         const entero = Math.floor(num);
         const centavos = Math.round((num - entero) * 100).toString().padStart(2, '0');
         const enteroFormateado = entero.toLocaleString('es-EC');
-        return `<span style="font-size:0.4em;font-weight:400;vertical-align:middle;margin-right:1px;">US$</span><strong>${enteroFormateado}</strong><span style="font-size:0.55em;font-weight:400;position:relative;top:-0.4em;margin-left:1px;">,${centavos}</span>`;
+        return `<span style="font-size:0.6em;font-weight:400;vertical-align:middle;margin-right:1px;">US$</span><strong>${enteroFormateado}</strong><span style="font-size:0.55em;font-weight:400;position:relative;top:-0.4em;margin-left:1px;">,${centavos}</span>`;
     }
 
     function capitalizarPrimeraLetra(texto) {

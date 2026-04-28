@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 ?>
 
 <style>
@@ -292,4 +293,4 @@ include 'includes/header.php';
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/servicios.js?v1.0.0.0.0.0.0.0.0.0.0.0.0.1.4"></script>
+<script src="js/servicios.js?v=<?php echo $timer; ?>"></script>

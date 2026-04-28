@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 ?>
 <link rel="canonical" href="https://fulmuv.com/">
 
@@ -1208,6 +1209,13 @@ include 'includes/footer.php';
 
 
 <script>
+    function formatPrecioSuperscript(valor) {
+        const num = parseFloat(valor) || 0;
+        const entero = Math.floor(num);
+        const decimales = Math.round((num - entero) * 100).toString().padStart(2, '0');
+        return `<span style="font-size:0.6em;vertical-align:super;">US$</span><strong>${entero.toLocaleString('es-EC')}</strong><sup style="font-size:0.6em;top:-0.4em;">${decimales}</sup>`;
+    }
+
     $(".breadcrumb-wrap").addClass("d-none")
 
     let categoriasExtraData = [];
@@ -1822,14 +1830,12 @@ include 'includes/footer.php';
 
                             <div class="product-content-wrap p-1">
                                 <h2 class="text-center">
-                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1">
+                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1 fw-normal">
                                         ${capitalizarPrimeraLetra(data.titulo_producto)}
                                     </a>
                                 </h2>
                                 <div class="product-price mb-2 mt-0 text-center">
-                                    <span>
-                                        ${formatoMoneda.format(tieneDescuento ? precioDescuento : data.precio_referencia)}
-                                    </span>
+                                    <span>${formatPrecioSuperscript(tieneDescuento ? precioDescuento : data.precio_referencia)}</span>
                                     ${tieneDescuento ? `<span class="old-price">${formatoMoneda.format(data.precio_referencia)}</span>` : ''}
                                 </div>
                             </div>
@@ -1953,14 +1959,12 @@ include 'includes/footer.php';
 
                             <div class="product-content-wrap p-1">
                                 <h2 class="text-center">
-                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1">
+                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1 fw-normal">
                                         ${capitalizarPrimeraLetra(data.titulo_producto)}
                                     </a>
                                 </h2>
                                 <div class="product-price mb-2 mt-0 text-center">
-                                    <span>
-                                        ${formatoMoneda.format(tieneDescuento ? precioDescuento : data.precio_referencia)}
-                                    </span>
+                                    <span>${formatPrecioSuperscript(tieneDescuento ? precioDescuento : data.precio_referencia)}</span>
                                     ${tieneDescuento ? `<span class="old-price">${formatoMoneda.format(data.precio_referencia)}</span>` : ''}
                                 </div>
                             </div>
@@ -2130,7 +2134,7 @@ include 'includes/footer.php';
                                     ${categoriaPrincipal}${subcategoriaPrincipal ? ` · ${subcategoriaPrincipal}` : ""}
                                 </div>
                                 <h2 class="text-center">
-                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1">
+                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1 fw-normal">
                                         ${capitalizarPrimeraLetra(data.titulo_producto)}
                                     </a>
                                 </h2>
@@ -2139,9 +2143,7 @@ include 'includes/footer.php';
                                 ${(provincia || canton) ? `<div class="text-center small text-muted mb-1"><i class="fi-rs-marker"></i> ${provincia || '—'}${canton ? ` · ${canton}` : ''}</div>` : ""}
                                 ${vendidosHoy > 0 ? `<div class="text-center small text-muted mb-1">Vendidos hoy: ${vendidosHoy}</div>` : ""}
                                 <div class="product-price mb-2 mt-0 text-center">
-                                    <span>
-                                        ${formatoMoneda.format(tieneDescuento ? precioDescuento : data.precio_referencia)}
-                                    </span>
+                                    <span>${formatPrecioSuperscript(tieneDescuento ? precioDescuento : data.precio_referencia)}</span>
                                     ${tieneDescuento ? `<span class="old-price">${formatoMoneda.format(data.precio_referencia)}</span>` : ''}
                                 </div>
                             </div>
@@ -2222,14 +2224,12 @@ include 'includes/footer.php';
 
                             <div class="product-content-wrap p-1">
                                 <h2 class="text-center">
-                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1">
+                                    <a onclick="irADetalleProductoConTerminos(${data.id_producto}); return false;" class="limitar-lineas mt-1 fw-normal">
                                         ${capitalizarPrimeraLetra(data.titulo_producto)}
                                     </a>
                                 </h2>
                                 <div class="product-price mb-2 mt-0 text-center">
-                                    <span>
-                                        ${formatoMoneda.format(tieneDescuento ? precioDescuento : data.precio_referencia)}
-                                    </span>
+                                    <span>${formatPrecioSuperscript(tieneDescuento ? precioDescuento : data.precio_referencia)}</span>
                                     ${tieneDescuento ? `<span class="old-price">${formatoMoneda.format(data.precio_referencia)}</span>` : ''}
                                 </div>
                             </div>
@@ -2323,7 +2323,7 @@ include 'includes/footer.php';
                                     </div>
                                     <div class="mt-auto">
                                         <div class="home-vehicle-price">
-                                            <span>${formatoMoneda.format(tieneDesc ? precioConDesc : data.precio_referencia)}</span>
+                                            <span>${formatPrecioSuperscript(tieneDesc ? precioConDesc : data.precio_referencia)}</span>
                                             ${tieneDesc ? `<span class="old-price">${formatoMoneda.format(data.precio_referencia)}</span>` : ''}
                                         </div>
                                     </div>

@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 
 $id_producto = $_GET["q"];
 
@@ -435,4 +436,4 @@ include 'includes/footer.php';
 ?>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO-o5grVvaS5wwq6CFZ3-VBOMBzSclCEg&libraries=places&callback=initMap" async defer></script>
 
-<script src="js/detalle_vehiculo.js?v1.0.0.0.0.0.0.0.0.1.10"></script>
+<script src="js/detalle_vehiculo.js?v=<?php echo $timer; ?>"></script>

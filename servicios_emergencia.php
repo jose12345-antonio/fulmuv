@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 ?>
 <link rel="canonical" href="https://fulmuv.com/servicios_emergencia.php">
 
@@ -259,4 +260,4 @@ include 'includes/header.php';
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/servicios_emergencia.js?v1.0.0.0.0.0.0.0.0.0.0.1.9"></script>
+<script src="js/servicios_emergencia.js?v=<?php echo $timer; ?>"></script>

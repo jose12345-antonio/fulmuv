@@ -7,6 +7,15 @@
    - Incluye TODAS las funciones auxiliares
    ============================================================ */
 
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 /* ====================== Estado global ====================== */
 let itemsPerPage = 20;
 let currentPage = 1;
@@ -111,7 +120,7 @@ $(document).ready(function () {
         $.post("api/v1/fulmuv/productos/idCategoria", { id_categoria: idsCategorias }, function (returnedData) {
             if (returnedData?.error) return;
 
-            productosDataAll = filterByMembresiaActiva(returnedData.data || []);
+            productosDataAll = shuffleArray(filterByMembresiaActiva(returnedData.data || []));
 
             // Index categorías/subcategorías desde productos
             refreshAvailableFilters();

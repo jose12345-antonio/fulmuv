@@ -119,66 +119,55 @@ function actualizarshopCart() {
     // ============================
     // 👇 TU LÓGICA NORMAL (igual)
     // ============================
-    let totalValor = 0;          // total estimado (con IVA removido si iva==1)
-    let totalValorCarrito = 0;   // carrito original (sin tocar)
-    let totalAhorro = 0;         // ahorro por descuento + ahorro por iva incluido
-    let totalAhorroIVA = 0;      // SOLO el IVA retirado (para el modal)
-    let ivaDetalles = [];        // detalle por producto (para el modal)
-    let totalAhorroUnitario = 0;
-    let totalEstimado = 0;
+    let totalValorOriginal = 0;  // sum(precioBase × cant)   → "Valor de productos" (sin IVA)
+    let totalDescuento     = 0;  // ahorro por descuentos    → "Ahorraste" (informativo, no resta)
+    let totalIVA           = 0;  // IVA extraído / añadido   → "IVA"
+    let totalFinalProv     = 0;  // Valor + IVA              → "Total de pago a proveedores"
+    let ivaDetalles = [];
+
     $("#listaProductoShopCart").empty();
     $("#listaProductoShopCartMobile").empty();
     $("#listaProductoShopCartSummary").empty();
 
     $("#btnContinuarOrden").removeClass("d-none")
 
-    console.log(carrito)
-    carrito.forEach((item, index) => {
-        const precioOriginal = parseFloat(item.precio);
-        const precioConDescuento = parseFloat(item.valor_descuento || item.precio);
+    carrito.forEach((item) => {
+        const precioOriginal     = parseFloat(item.precio) || 0;
+        const precioConDescuento = parseFloat(item.valor_descuento) > 0
+            ? parseFloat(item.valor_descuento)
+            : precioOriginal;
 
         const cantidad = parseInt(item.cantidad) || 1;
-        const subtotal = precioConDescuento * cantidad;
-        const subtotalCarrito = precioConDescuento * cantidad;
-
-        const ahorroUnitario = precioOriginal - precioConDescuento;
-        const ahorroDescuento = ahorroUnitario * cantidad;
-
         const tieneIVA = parseInt(item.iva) === 1;
 
-        // IVA 15%
-        const ivaCalculado = subtotal * 0.15;
+        // Precio base (sin IVA) e IVA unitario según tipo
+        // IVA incluido → extraer dividiendo entre 1.15; sin IVA → sumar 15% sobre el precio
+        const precioBase   = tieneIVA ? precioConDescuento / 1.15 : precioConDescuento;
+        const ivaUnitario  = tieneIVA ? precioConDescuento - precioBase : precioConDescuento * 0.15;
 
-        let subtotalFinal = subtotal;
-        let ahorroIVA = 0;
+        // Subtotal visible en tabla/cards (precio efectivo × qty, sin alterar la vista por ítem)
+        const subtotal     = precioConDescuento * cantidad;
+        const subtotalBase = precioBase * cantidad;
+        const ivaSubtotal  = ivaUnitario * cantidad;
 
-        if (tieneIVA) {
-            // 🟢 Precio ya incluye IVA → quitarlo
-            subtotalFinal = subtotal - ivaCalculado;
-            ahorroIVA = ivaCalculado;
-        } else {
-            // 🔵 Precio sin IVA → beneficio cliente
-            subtotalFinal = subtotal;
-            ahorroIVA = ivaCalculado;
-        }
+        // Ahorraste: diferencia de precio mostrado (original vs con descuento). Solo informativo.
+        const ahorroItem = (precioOriginal - precioConDescuento) * cantidad;
 
-        // Totales
-        totalValorCarrito += subtotalCarrito;
-        totalValor += subtotalFinal;
-        totalAhorro += (ahorroIVA);
-        totalAhorroIVA += ahorroIVA;
-        const ahorroTotalDeEsteItem = ahorroUnitario * cantidad;
-        totalAhorroUnitario += ahorroTotalDeEsteItem;
+        // Acumuladores
+        totalValorOriginal += subtotalBase;                // "Valor de productos" = bases sin IVA
+        totalDescuento     += ahorroItem;                  // "Ahorraste" = informativo
+        totalIVA           += ivaSubtotal;                 // IVA extraído o añadido
+        totalFinalProv     += subtotalBase + ivaSubtotal;  // "Total" = Valor (base) + IVA
 
-        // Guardar detalle modal
+        // Detalle modal IVA
         ivaDetalles.push({
             nombre: item.nombre,
             codigo: item.codigo,
             cantidad,
             precioUnitario: precioConDescuento,
             subtotal,
-            ivaCalculado,
-            tipo: tieneIVA ? "incluido" : "beneficio"
+            ivaCalculado: ivaSubtotal,
+            tipo: tieneIVA ? "incluido" : "calculado"
         });
 
 
@@ -307,13 +296,15 @@ function actualizarshopCart() {
 
     $("#cscard-prod-count").text(carrito.length);
 
-    totalEstimado = totalValor + totalAhorro - totalAhorroUnitario;
-
-    $("#cart_carrito_amount").html(formatPrecioSuperscript(totalValor));
-    $("#cart_subtotal_amount").html(formatPrecioSuperscript(totalEstimado));
-    $("#cart_total_amount").html(formatPrecioSuperscript(totalValor + totalAhorro));
-    $("#cart_iva_amount").html(formatPrecioSuperscript(totalAhorro));
-    $("#cart_ahorro_amount").html(`<span style="margin-right:2px;">−</span>${formatPrecioSuperscript(totalAhorroUnitario)}`);
+    $("#cart_carrito_amount").html(formatPrecioSuperscript(totalValorOriginal));
+    $("#cart_iva_amount").html(formatPrecioSuperscript(totalIVA));
+    if (totalDescuento > 0.005) {
+        $(".cscard-row-savings").show();
+        $("#cart_ahorro_amount").html(`<span style="margin-right:2px;">−</span>${formatPrecioSuperscript(totalDescuento)}`);
+    } else {
+        $(".cscard-row-savings").hide();
+    }
+    $("#cart_total_amount").html(formatPrecioSuperscript(totalFinalProv));
 
     $("#totalCarritoShop").text(carrito.length);
 
@@ -364,15 +355,15 @@ function actualizarshopCart() {
       </table>
     </div>
     <div class="small text-muted">
-    Productos con <strong>IVA incluido</strong>: se retiró el 15% del precio.<br>
-    Productos sin IVA: se aplicó un <strong>beneficio equivalente al 15%</strong>.
+    Productos con <strong>IVA incluido</strong>: IVA extraído del precio (precio ÷ 1.15).<br>
+    Productos sin IVA: <strong>IVA 15%</strong> calculado sobre el precio base.
     </div>
   `);
 
         $("#ivaTotalRetirado").text(formatoMoneda.format(totalIva));
     }
 
-    renderIvaModal(ivaDetalles, totalAhorroIVA);
+    renderIvaModal(ivaDetalles, totalIVA);
 
     // ✅ Si no hay IVA incluido, igual permitimos abrir modal, pero puedes ocultar el botón:
     if (ivaDetalles.length === 0) {

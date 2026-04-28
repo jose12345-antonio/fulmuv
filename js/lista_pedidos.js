@@ -1,6 +1,14 @@
 const numero_orden = $("#numero_orden").val();
-let ordenDataGlobal = null; // guardamos la orden para "Detalle"
+let ordenDataGlobal = null;
 let mapaOrden, marcadorOrden;
+
+function formatPrecioSuperscript(valor) {
+    const num = Number(valor) || 0;
+    const entero = Math.floor(num);
+    const centavos = Math.round((num - entero) * 100).toString().padStart(2, '0');
+    const enteroFormateado = entero.toLocaleString('es-EC');
+    return `<span style="font-size:0.6em;font-weight:400;vertical-align:middle;margin-right:1px;">US$</span><strong>${enteroFormateado}</strong><span style="font-size:0.55em;font-weight:400;position:relative;top:-0.4em;margin-left:1px;">,${centavos}</span>`;
+}
 
 // === Agencias (cache global) ===
 let AGENCIAS_MAP = {};
@@ -41,15 +49,47 @@ function agenciaNombreById(id) {
 }
 function badgeEstado(estado) {
   const s = String(estado || '').toLowerCase();
-  const map = {
-    creada: 'bg-secondary text-white', procesada: 'bg-warning text-dark',
-    enviada: 'bg-primary text-white', aprobada: 'bg-success text-white',
-    completada: 'bg-success text-white', eliminada: 'bg-danger text-white',
-    pendiente: 'bg-info text-dark'
+  const icons = {
+    creada:'fi-rs-clock', procesada:'fi-rs-refresh', enviada:'fi-rs-truck-side',
+    aprobada:'fi-rs-check-circle', completada:'fi-rs-check-circle',
+    eliminada:'fi-rs-cross-circle', pendiente:'fi-rs-time-past'
   };
-  const cls = map[s] || 'bg-light text-dark';
-  const label = s ? s.charAt(0).toUpperCase() + s.slice(1) : '—';
-  return `<span class="badge-estado ${cls}">${label}</span>`;
+  const labels = {
+    creada:'Creada', procesada:'Procesada', enviada:'Enviada',
+    aprobada:'Entregada', completada:'Entregada',
+    eliminada:'Cancelada', pendiente:'Pendiente'
+  };
+  const cls   = `s-${s || 'default'}`;
+  const icon  = icons[s]  || 'fi-rs-info';
+  const label = labels[s] || (s ? s.charAt(0).toUpperCase() + s.slice(1) : '—');
+  return `<span class="badge-estado ${cls}"><i class="${icon}"></i> ${label}</span>`;
+}
+
+function stepsHtml(estadoVenta, esRetiro) {
+  if (esRetiro) {
+    const steps = [
+      { label: 'Creada',     done: estadoVenta >= 0, active: estadoVenta === 0 },
+      { label: 'Confirmada', done: estadoVenta >= 1, active: estadoVenta === 1 },
+      { label: 'Lista',      done: estadoVenta >= 2, active: estadoVenta === 2 }
+    ];
+    return stepsRow(steps);
+  }
+  const steps = [
+    { label: 'Creada',     done: estadoVenta >= 0, active: estadoVenta === 0 },
+    { label: 'Procesada',  done: estadoVenta >= 1, active: estadoVenta === 1 },
+    { label: 'Pago envío', done: estadoVenta >= 2, active: estadoVenta === 2 },
+    { label: 'En camino',  done: estadoVenta >= 3, active: estadoVenta === 3 }
+  ];
+  return stepsRow(steps);
+}
+
+function stepsRow(steps) {
+  const html = steps.map(s => `
+    <div class="order-step ${s.done && !s.active ? 'done' : ''} ${s.active ? 'active' : ''}">
+      <div class="step-dot"></div>
+      <span class="step-label">${s.label}</span>
+    </div>`).join('');
+  return `<div class="order-steps">${html}</div>`;
 }
 
 // Ajusta el endpoint si usas otro (p.ej. api/v1/fulmuv/getTarifasFulmuv)
@@ -318,14 +358,15 @@ function getOrdenSeguimiento(numeroOrden) {
             <div class="product-item">
               <img class="product-thumb" src="${escapeHtml(img)}" onerror="this.src='img/placeholder.png'">
               <div class="order-info">
-                <h6>${badgeEstado(empresa.orden_estado)}
-                  <span class="product-name">${escapeHtml(p.nombre || '')}</span>
-                </h6>
-                <div class="meta">Vendido por: ${escapeHtml(empresaNombre)}</div>
+                <div class="product-name">${escapeHtml(p.nombre || '')}</div>
+                <div class="meta">
+                  <span>Vendido por: <strong>${escapeHtml(empresaNombre)}</strong></span>
+                  ${ivaIncluido ? ' &nbsp;·&nbsp; <span style="color:#16a34a;font-size:10px;font-weight:700;">IVA incl.</span>' : ''}
+                </div>
               </div>
-              <div class="ms-auto text-end">
-                <div class="fw-semibold">${formatoMoneda.format(linea)}</div>
-                <small class="text-muted">x${cant}</small>
+              <div class="ms-auto text-end" style="flex-shrink:0;">
+                <div style="font-weight:700;font-size:18px;color:#004E60;">${formatPrecioSuperscript(linea)}</div>
+                <small class="text-muted">× ${cant}</small>
               </div>
             </div>
           `;
@@ -338,24 +379,35 @@ function getOrdenSeguimiento(numeroOrden) {
         if (esRetiroEmpresa) {
           shippingBoxHTML = `
             <div class="shipping-box success">
-              <div class="amount">Retiro en tienda</div>
-              <div class="note">Estos productos se recogerán en la empresa <strong>${escapeHtml(empresaNombre)}</strong>.</div>
+              <i class="fi-rs-shop sbox-icon"></i>
+              <div class="sbox-content">
+                <div class="amount">Retiro en tienda</div>
+                <div class="note">Recoge tus productos directamente en <strong>${escapeHtml(empresaNombre)}</strong>.</div>
+              </div>
             </div>`;
         } else switch (estadoVenta) {
           case 0:
             shippingBoxHTML = `
-            <div class="shipping-box">
-              <div class="amount">Productos en proceso de confirmación de peso por parte de la empresa</div>
+            <div class="shipping-box warning">
+              <i class="fi-rs-clock sbox-icon"></i>
+              <div class="sbox-content">
+                <div class="label">Estado del pedido</div>
+                <div class="amount">Confirmando peso con la empresa</div>
+                <div class="note">La empresa está verificando el peso de los productos para calcular el costo de envío.</div>
+              </div>
             </div>`;
             break;
 
           case 1:
             if (envioInfo.ok) {
               shippingBoxHTML = `
-              <div class="shipping-box">
-                <div class="label">En proceso de confirmación por parte de la empresa</div>
-                <div class="amount">Peso total: ${envioInfo.peso.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg</div>
-                <div class="note">${escapeHtml(envioInfo.nombreTrayecto || '—')} · Total estimado: ${formatoMoneda.format(envioInfo.total)}</div>
+              <div class="shipping-box info">
+                <i class="fi-rs-truck-side sbox-icon"></i>
+                <div class="sbox-content">
+                  <div class="label">Envío a domicilio · ${escapeHtml(envioInfo.nombreTrayecto || '—')}</div>
+                  <div class="amount">${envioInfo.peso.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg · Estimado: ${formatPrecioSuperscript(envioInfo.total)}</div>
+                  <div class="note">En proceso de confirmación por la empresa.</div>
+                </div>
               </div>`;
             }
             break;
@@ -364,20 +416,26 @@ function getOrdenSeguimiento(numeroOrden) {
             if (isPagado) {
               shippingBoxHTML = `
               <div class="shipping-box success">
-                <div class="amount">Pago de envío registrado ✅</div>
-                <div class="note">Por favor, espera la confirmación de FULMUV para la generación de tu guía por Grupo Entregas.</div>
+                <i class="fi-rs-check-circle sbox-icon"></i>
+                <div class="sbox-content">
+                  <div class="amount">Pago de envío registrado</div>
+                  <div class="note">FULMUV está generando tu guía de despacho con Grupo Entregas.</div>
+                </div>
               </div>`;
             } else if (envioInfo.ok) {
               shippingBoxHTML = `
-              <div class="shipping-box">
-                <div class="label">Envío a domicilio — ${escapeHtml(envioInfo.nombreTrayecto || '—')}</div>
-                <div class="amount">Total tarifa: ${formatoMoneda.format(envioInfo.totalSeguro)} (Ya incluye el IVA + Seguro)</div>
-                <div class="note">
-                  ${envioInfo.peso.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg · 
-                  ${envioInfo.peso <= 2
-                  ? `hasta 2 kg: ${formatoMoneda.format(envioInfo.base)} × ${envioInfo.peso.toFixed(2)}`
-                  : `${formatoMoneda.format(envioInfo.base)} ${envioInfo.kilosExtra > 0 ? `+ ${envioInfo.kilosExtra.toFixed(2)} × ${formatoMoneda.format(envioInfo.adicionalKg)} (kilo adicional)` : ''}`
-                }
+              <div class="shipping-box warning">
+                <i class="fi-rs-credit-card sbox-icon"></i>
+                <div class="sbox-content">
+                  <div class="label">Envío a domicilio — ${escapeHtml(envioInfo.nombreTrayecto || '—')}</div>
+                  <div class="amount">Total tarifa: ${formatPrecioSuperscript(envioInfo.totalSeguro)} <small style="font-weight:400;font-size:11px;">(IVA + Seguro incluido)</small></div>
+                  <div class="note">
+                    ${envioInfo.peso.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg ·
+                    ${envioInfo.peso <= 2
+                      ? `hasta 2 kg: ${formatPrecioSuperscript(envioInfo.base)} × ${envioInfo.peso.toFixed(2)}`
+                      : `${formatPrecioSuperscript(envioInfo.base)} ${envioInfo.kilosExtra > 0 ? `+ ${envioInfo.kilosExtra.toFixed(2)} × ${formatPrecioSuperscript(envioInfo.adicionalKg)} (kilo adicional)` : ''}`
+                    }
+                  </div>
                 </div>
               </div>`;
             }
@@ -387,8 +445,11 @@ function getOrdenSeguimiento(numeroOrden) {
             if (tieneGuia) {
               shippingBoxHTML = `
                 <div class="shipping-box success">
-                  <div class="amount">Pedido enviado con éxito</div>
-                  <div class="note h4">Número de guía: <h3 class="fw-bold">${escapeHtml(String(idGuia))}</h3></div>
+                  <i class="fi-rs-box sbox-icon"></i>
+                  <div class="sbox-content">
+                    <div class="amount">¡Pedido en camino!</div>
+                    <div class="note">Número de guía Grupo Entregas: <strong style="font-size:14px;">${escapeHtml(String(idGuia))}</strong></div>
+                  </div>
                 </div>`;
             }
             break;
@@ -397,64 +458,88 @@ function getOrdenSeguimiento(numeroOrden) {
         const totalPagarProducto = totalFinal;
         const pagoRetiroRealizado = (estadoCuenta === 2 || estadoVenta === 2);
 
+        const pagoFooter = esRetiroEmpresa
+          ? (pagoRetiroRealizado
+              ? '<span class="badge bg-success"><i class="fi-rs-check me-1"></i>Pago realizado</span>'
+              : '<span class="badge bg-warning text-dark"><i class="fi-rs-clock me-1"></i>Pago pendiente al proveedor</span>')
+          : (isPagado
+              ? '<span class="badge bg-success"><i class="fi-rs-check me-1"></i>Pago de envío registrado</span>'
+              : '<span class="badge bg-warning text-dark"><i class="fi-rs-clock me-1"></i>Pago de envío pendiente</span>');
+
         $cards.append(`
           <div class="order-card">
+
+            <!-- Cabecera oscura -->
             <div class="card-head">
-              <div class="kv"><span class="k">Pedido realizado:</span> <span class="v">${fechaPedido}</span></div>
-              <div class="kv"><span class="k">Total:</span> <span class="v">${formatoMoneda.format(totalPagarProducto)}</span></div>
-              <div class="kv"><span class="k">Empresa:</span> <span class="v">${escapeHtml(empresaNombre)}</span></div>
-              <!-- ✅ Trayecto junto a Empresa -->
-              ${esRetiroEmpresa
-                ? `<div class="kv"><span class="k">Retiro:</span> <span class="v">En tienda (${escapeHtml(empresaNombre)})</span></div>`
-                : `<div class="kv"><span class="k">Trayecto:</span> <span class="v">${escapeHtml(trayectoNombre)}</span></div>`
-              }
-              <div class="ms-auto kv"><span class="k">Pedido Nº:</span> <span class="v">${escapeHtml(data.numero_orden)}</span></div>
+              <div class="kv">
+                <span class="k">Pedido Nº</span>
+                <span class="v">${escapeHtml(data.numero_orden)}</span>
+              </div>
+              <div class="kv">
+                <span class="k">Fecha</span>
+                <span class="v">${fechaPedido}</span>
+              </div>
+              <div class="kv">
+                <span class="k">Empresa</span>
+                <span class="v">${escapeHtml(empresaNombre)}</span>
+              </div>
+              ${!esRetiroEmpresa && trayectoNombre ? `
+              <div class="kv">
+                <span class="k">Trayecto</span>
+                <span class="v">${escapeHtml(trayectoNombre)}</span>
+              </div>` : ''}
+              <div class="kv ms-auto">
+                <span class="k">Total productos</span>
+                <span class="v">${formatPrecioSuperscript(totalPagarProducto)}</span>
+              </div>
             </div>
 
+            <!-- Barra de pasos -->
+            ${stepsHtml(estadoVenta, esRetiroEmpresa)}
+
+            <!-- Cuerpo: columna única -->
             <div class="card-body">
-             <div class="order-left" style="flex-direction:column;">
-                ${productosHTML || `<div class="text-muted">Sin productos</div>`}
-                ${shippingBoxHTML}
+              ${productosHTML || `<div class="text-muted small py-2">Sin productos registrados</div>`}
+
+              <!-- Badge estado debajo de productos -->
+              <div class="estado-bar">
+                ${badgeEstado(empresa.orden_estado)}
               </div>
 
-
-              <div class="order-right">
-                <div class="order-actions">
-                  <button type="button" class="btn btn-outline-secondary btn-mapa"
-                          data-lat="${isFinite(lat) ? lat : ''}"
-                          data-lng="${isFinite(lng) ? lng : ''}"
-                          data-dir="${(direccionRef || '').replace(/"/g, '&quot;')}"> 
-                    Localiza tu paquete
-                  </button>
-
-                 ${(!esRetiroEmpresa && showPago && !isPagado) ? `
-                    <button type="button" class="btn btn-danger" style="background: #F54927"
-                            onclick="abrirModalPago('${data.numero_orden}','${productosEncoded}',${Number(subtotal) || 0},${idOrdenEmpresa || 0})">
-                      Pagar envío a domicilio
-                    </button>` : ''}
-
-                    <button type="button" class="btn btn-outline-secondary btn-detalle" style="background: #B7FFFF; color: #000"
-                            onclick="abrirModalDetalle('${data.numero_orden}', ${idOrdenEmpresa || 0})"
-                            data-numero="${escapeHtml(data.numero_orden)}"> 
-                          Detalle de la orden
-                    </button>
-                   ${enviadoConGuia ? `
-                    <button type="button" class="btn btn-info" style="background: #F54927"
-                      onclick="abrirModalGuia('${idOrdenEmpresa}', this)">
-                      Ver guía Grupo Entregas
-                    </button>` : ''}
-                </div>
-              </div>
+              ${shippingBoxHTML}
             </div>
 
+            <!-- Barra de acciones horizontal -->
+            <div class="order-actions-bar">
+              <button type="button" class="btn-action btn-action-map btn-mapa"
+                      data-lat="${isFinite(lat) ? lat : ''}"
+                      data-lng="${isFinite(lng) ? lng : ''}"
+                      data-dir="${(direccionRef || '').replace(/"/g, '&quot;')}">
+                <i class="fi-rs-marker"></i> Localizar paquete
+              </button>
+
+              ${(!esRetiroEmpresa && showPago && !isPagado) ? `
+              <button type="button" class="btn-action btn-action-pay"
+                      onclick="abrirModalPago('${data.numero_orden}','${productosEncoded}',${Number(subtotal) || 0},${idOrdenEmpresa || 0})">
+                <i class="fi-rs-credit-card"></i> Pagar envío a domicilio
+              </button>` : ''}
+
+              <button type="button" class="btn-action btn-action-detail btn-detalle"
+                      onclick="abrirModalDetalle('${data.numero_orden}', ${idOrdenEmpresa || 0})"
+                      data-numero="${escapeHtml(data.numero_orden)}">
+                <i class="fi-rs-receipt"></i> Ver detalle
+              </button>
+
+              ${enviadoConGuia ? `
+              <button type="button" class="btn-action btn-action-guide"
+                      onclick="abrirModalGuia('${idOrdenEmpresa}', this)">
+                <i class="fi-rs-box"></i> Ver guía Grupo Entregas
+              </button>` : ''}
+            </div>
+
+            <!-- Footer: estado de pago -->
             <div class="order-footer">
-              ${esRetiroEmpresa
-                ? (pagoRetiroRealizado
-                  ? '<span class="badge bg-success">Pago realizado (recoger pedido)</span>'
-                  : '<span class="badge bg-warning text-dark">Pago pendiente</span>')
-                : (isPagado
-                  ? '<span class="badge bg-success">Pago registrado</span>'
-                  : '<span class="badge bg-warning text-dark">Pago pendiente</span>')}
+              ${pagoFooter}
             </div>
           </div>
         `);

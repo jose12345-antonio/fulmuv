@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 
 $id_empresa = $_GET["q"];
 
@@ -1396,4 +1397,4 @@ echo '<input type="hidden" id="id_usuario_session" value="' . (int)($_SESSION["i
 <?php
 include 'includes/footer.php';
 ?>
-<script src="js/productos_vendor.js?v1.1.16"></script>
+<script src="js/productos_vendor.js?v=<?php echo $timer; ?>"></script>

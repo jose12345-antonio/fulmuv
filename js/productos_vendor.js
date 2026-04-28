@@ -2,6 +2,15 @@ let itemsPerPage = 20;
 let currentPage = 1;
 let productosData = [];
 
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 let sortOption = "todos"; // opciones: "mayor", "menor", "todos"
 let searchText = "";
 let subcategoriasSeleccionadas = [];
@@ -563,7 +572,7 @@ $(document).ready(function () {
 
     $.post("api/v1/fulmuv/productos/idEmpresa", { id_empresa: id_empresa }, function (returnedData) {
         if (!returnedData.error) {
-            productosData = filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []);
+            productosData = shuffleArray(filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []));
             renderEmpresas(productosData, currentPage);
             console.log(returnedData.data)
             console.log(productosData)
@@ -608,7 +617,7 @@ $(document).on("change", "input[name='checkbox']", function () {
         $("#subcats-box").hide();
         $.post("api/v1/fulmuv/productos/idEmpresa", { id_empresa: id_empresa }, function (returnedData) {
             if (!returnedData.error) {
-                productosData = filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []);
+                productosData = shuffleArray(filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []));
                 const maxPrecio = Math.max(...productosData.map(p => parseFloat(p.precio_referencia)));
                 inicializarSlider(maxPrecio);
                 refreshFiltersForCurrentLocation();
@@ -639,7 +648,7 @@ $(document).on("change", "input[name='checkbox']", function () {
     if (!haySeleccion) {
         $.post("api/v1/fulmuv/productos/idEmpresa", { id_empresa: id_empresa }, function (returnedData) {
             if (!returnedData.error) {
-                productosData = filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []);
+                productosData = shuffleArray(filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []));
                 const maxPrecio = Math.max(...productosData.map(p => parseFloat(p.precio_referencia)));
                 inicializarSlider(maxPrecio);
 
@@ -660,7 +669,7 @@ $(document).on("change", "input[name='checkbox']", function () {
     // 1) Productos por categorías seleccionadas (únicas)
     $.post("api/v1/fulmuv/productos/idEmpresa", { id_empresa: id_empresa }, function (returnedData) {
         if (!returnedData.error) {
-            productosData = filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []);
+            productosData = shuffleArray(filterByMembresiaActiva(normalizarItemsEmpresa(returnedData) || []));
             const maxPrecio = Math.max(...productosData.map(p => parseFloat(p.precio_referencia)));
             inicializarSlider(maxPrecio);
             refreshFiltersForCurrentLocation();

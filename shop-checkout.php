@@ -1,5 +1,6 @@
 <?php
 include 'includes/header.php';
+$timer = time();
 
 $id_empresa = $_GET["q"];
 echo '<input type="hidden" id="id_empresa" class="form-control" value="' . $id_empresa . '" />';
@@ -165,15 +166,39 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
 
     /* ── Mini lista de productos ── */
     .co-mini-list {
-        max-height: 192px;
-        overflow-y: auto;
+        overflow-y: hidden;
         padding: 6px 14px;
         background: rgba(255,109,1,0.04);
-        border-bottom: 1px solid rgba(255,109,1,0.12);
+    }
+    .co-mini-list.is-expanded {
+        max-height: 210px;
+        overflow-y: auto;
     }
     .co-mini-list::-webkit-scrollbar { width: 4px; }
     .co-mini-list::-webkit-scrollbar-track { background: transparent; }
     .co-mini-list::-webkit-scrollbar-thumb { background: rgba(255,109,1,0.3); border-radius: 4px; }
+
+    /* ── Toggle ver todos ── */
+    .co-list-toggle {
+        width: 100%;
+        background: rgba(255,109,1,0.07);
+        border: none;
+        border-top: 1px solid rgba(255,109,1,0.14);
+        border-bottom: 1px solid rgba(255,109,1,0.14);
+        padding: 7px 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #FF6D01;
+        cursor: pointer;
+        transition: background .15s;
+    }
+    .co-list-toggle:hover { background: rgba(255,109,1,0.13); }
+    .co-list-toggle i { font-size: 11px; transition: transform .25s; }
+    .co-list-toggle.is-open i { transform: rotate(180deg); }
 
     .co-mini-item {
         display: flex;
@@ -204,6 +229,16 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
     }
     .co-sec-totals .co-sec-row { padding: 4px 0; border-bottom: 1px solid rgba(255,109,1,0.08); }
     .co-sec-totals .co-sec-row:last-child { border-bottom: none; }
+
+    .co-sec-row--savings {
+        background: rgba(144, 255, 189, 0.18);
+        border-radius: 6px;
+        padding: 4px 6px;
+        margin: 2px 0;
+    }
+    .co-sec-row--savings .co-sec-lbl { color: #00754a; }
+    .co-sec-row--savings .co-sec-lbl i { color: #00754a; }
+    .co-sec-row--savings .co-sec-val { color: #00754a; }
 
     .co-sec-row--total {
         background: #004E60;
@@ -294,6 +329,41 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
         left: 20px;
         width: 180px;
         z-index: 1000
+    }
+
+    /* ── Botón ubicación en tiempo real ── */
+    #btnMiUbicacion {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 1000;
+        background: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 13px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #004E60;
+        cursor: pointer;
+        transition: background .15s, box-shadow .15s;
+        white-space: nowrap;
+    }
+    #btnMiUbicacion:hover { background: #f0f9fb; box-shadow: 0 4px 16px rgba(0,78,96,0.18); }
+    #btnMiUbicacion:disabled { opacity: .7; cursor: not-allowed; }
+    #btnMiUbicacion i { font-size: 15px; color: #004E60; }
+    #btnMiUbicacion .loc-pulse {
+        width: 10px; height: 10px;
+        background: #004E60;
+        border-radius: 50%;
+        animation: locPulse .8s ease-in-out infinite alternate;
+    }
+    @keyframes locPulse {
+        from { opacity: 1; transform: scale(1); }
+        to   { opacity: .35; transform: scale(.55); }
     }
 
     /* Autocomplete */
@@ -654,10 +724,13 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
                 <div class="d-flex align-items-start gap-3">
                     <div class="checkout-info-icon"><i class="fi fi-rs-info"></i></div>
                     <div>
-                        <p>Inicia sesión y completa tus datos de facturación para continuar con la gestión de tu pedido y coordinar tu envío a domicilio.</p>
-                        <p>Recuerda que la compra de los productos se realiza directamente con cada proveedor, mientras FULMUV actúa como intermediario comercial y gestiona la logística de entrega.</p>
-                        <p>Para agilizar tu proceso, te recomendamos mantener contacto con tus proveedores y confirmar con ellos la aprobación de tu compra desde su sistema, lo que permitirá avanzar más rápido con la preparación y despacho de tu pedido.</p>
-                        <p>Sigue los pasos y nuestro equipo logístico podrá ayudarte a completar tu entrega de forma más rápida, segura y eficiente.</p>
+                        <ul style="font-size:11px;color:#4a5568;line-height:1.7;margin:0;padding-left:16px;">
+                            <li>El valor de los productos se paga directamente con cada proveedor.</li>
+                            <li>FULMUV actúa como intermediario comercial y facilita la gestión logística de entrega a través de su socio autorizado, Grupo Entregas.</li>
+                            <li>El pago realizado a FULMUV corresponde exclusivamente al servicio de envío a domicilio y cobertura logística.</li>
+                            <li>Antes de confirmar tu pedido, verifica con el proveedor disponibilidad, características del producto y aprobación de tu compra.</li>
+                            <li>Para agilizar tu entrega, te recomendamos mantener contacto con tu proveedor y solicitar la validación de tu pedido desde su sistema.</li>
+                        </ul>
                     </div>
                 </div>
                 <span id="totalCarritoShop" class="d-none"></span>
@@ -828,6 +901,10 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
                                         </div>
                                         <ul id="sugerenciasDirecciones" class="list-group list-group-flush shadow-sm mt-1" style="display:none;"></ul>
                                     </div>
+                                    <button type="button" id="btnMiUbicacion" title="Usar mi ubicación actual">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        <span id="btnMiUbicacionTxt">Mi ubicación</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -851,6 +928,13 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
 
                     <!-- Pickup -->
                     <div id="pickupTienda" class="d-none">
+                        <div class="alert d-flex gap-2 align-items-start mb-3 py-2 px-3" style="background:rgba(0,78,96,0.06);border:1px solid rgba(0,78,96,0.18);border-radius:10px;">
+                            <i class="fi fi-rs-info" style="color:#004E60;font-size:15px;flex-shrink:0;margin-top:2px;"></i>
+                            <div style="font-size:11.5px;color:#374151;line-height:1.65;">
+                                Si eliges retirar en tienda, notificaremos a las empresas seleccionadas que te acercarás directamente a gestionar tu compra y retirar tus productos.<br>
+                                <span style="color:#FF6D01;font-weight:600;">No aplicará el servicio de envío a domicilio gestionado por FULMUV.</span>
+                            </div>
+                        </div>
                         <div class="border rounded p-3 mb-3">
                             <div class="d-flex">
                                 <div class="me-2 text-primary"><i class="fi-rs-marker"></i></div>
@@ -911,6 +995,7 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
 
                 <!-- Mini lista de productos -->
                 <div id="coProductList" class="co-mini-list"></div>
+                <div id="coListToggleArea"></div>
 
                 <!-- Totales -->
                 <div class="co-sec-totals">
@@ -921,6 +1006,10 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
                     <div class="co-sec-row">
                         <span class="co-sec-lbl">IVA (15%)</span>
                         <span class="co-sec-val" id="coIVA">—</span>
+                    </div>
+                    <div class="co-sec-row co-sec-row--savings" id="coAhorrasteRow" style="display:none;">
+                        <span class="co-sec-lbl"><i class="fi fi-rs-label me-1"></i>Ahorraste</span>
+                        <span class="co-sec-val" id="coAhorraste">—</span>
                     </div>
                     <div class="co-sec-row co-sec-row--total">
                         <span class="co-sec-lbl-total">Total referencial</span>
@@ -1045,7 +1134,7 @@ $sesionClienteId = ($frontUserLoggedIn && isset($_SESSION['id_usuario'])) ? (int
 <script>
     const SESION_CLIENTE_ID = <?php echo $sesionClienteId; ?>;
 </script>
-<script src="js/shop-checkout.js?v1.0.0.0.0.0.0.0.0.1.0.0.0.0.0.17"></script>
+<script src="js/shop-checkout.js?v=<?php echo $timer; ?>"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAO-o5grVvaS5wwq6CFZ3-VBOMBzSclCEg&libraries=places&callback=initMap" async defer></script>
 
 <script>

@@ -838,6 +838,8 @@ function initMap() {
         obtenerDireccionDesdeCoords(latitud, longitud);
     });
 
+    document.getElementById('btnMiUbicacion')?.addEventListener('click', usarUbicacionActual);
+
     const input = document.getElementById("buscarDireccion");
     map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
     const searchBox = new google.maps.places.SearchBox(input);
@@ -870,6 +872,55 @@ function initMap() {
     });
 
 }
+function usarUbicacionActual() {
+    if (!navigator.geolocation) {
+        Swal.fire({ icon: 'warning', title: 'No disponible', text: 'Tu navegador no admite geolocalización.' });
+        return;
+    }
+
+    const $btn = $('#btnMiUbicacion');
+    const $txt = $('#btnMiUbicacionTxt');
+
+    $btn.prop('disabled', true);
+    $txt.html('<span class="loc-pulse"></span>');
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+
+            latitud  = lat;
+            longitud = lng;
+
+            const position = new google.maps.LatLng(lat, lng);
+            map.setCenter(position);
+            map.setZoom(17);
+            marker.setPosition(position);
+
+            obtenerDireccionDesdeCoords(lat, lng);
+
+            $btn.prop('disabled', false);
+            $txt.text('Mi ubicación');
+        },
+        (err) => {
+            $btn.prop('disabled', false);
+            $txt.text('Mi ubicación');
+
+            const mensajes = {
+                1: 'Permiso denegado. Habilita la ubicación en tu navegador y vuelve a intentarlo.',
+                2: 'No se pudo determinar tu ubicación. Verifica que el GPS esté activo.',
+                3: 'Tiempo de espera agotado. Intenta de nuevo.'
+            };
+            Swal.fire({
+                icon: 'warning',
+                title: 'Ubicación no disponible',
+                text: mensajes[err.code] || 'No se pudo obtener tu ubicación.'
+            });
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+    );
+}
+
 function obtenerDireccionDesdeCoords(lat, lng, callback = null) {
     const latlng = { lat: parseFloat(lat), lng: parseFloat(lng) };
     geocoder.geocode({ location: latlng }, (results, status) => {
@@ -901,34 +952,35 @@ function actualizarshopCart() {
     const totalItems = carrito.reduce((s, i) => s + i.cantidad, 0);
     $("#totalCarritoShop").text(totalItems);
 
-    // Inicialización de acumuladores unificados con la lógica del carrito
-    let totalValorNeto = 0;      // Subtotal real (sin IVA)
-    let totalIVAGlobal = 0;      // IVA (15%)
-    let totalAhorroCupon = 0;    // Ahorro por descuento (Precio Original - Precio Descuento)
+    let totalValorNeto  = 0;  // sum(precioBase × cant)   → "Valor de productos" (sin IVA)
+    let totalIVAGlobal  = 0;  // IVA extraído / añadido   → "IVA"
+    let totalAhorraste  = 0;  // ahorro por descuentos    → "Ahorraste" (informativo, no resta)
+    let totalFinalProv  = 0;  // Valor + IVA              → "Total referencial"
 
-    $("#coProductList").empty();
+    $("#coProductList").empty().removeClass('is-expanded');
+    $("#coListToggleArea").empty();
 
     carrito.forEach(item => {
-        const precioOriginal = parseFloat(item.precio) || 0;
-        const precioConDesc = parseFloat(item.valor_descuento || item.precio) || 0;
+        const precioOriginal     = parseFloat(item.precio) || 0;
+        const precioConDesc      = parseFloat(item.valor_descuento) > 0
+            ? parseFloat(item.valor_descuento)
+            : precioOriginal;
         const cantidad = parseInt(item.cantidad) || 0;
         const tieneIVA = parseInt(item.iva) === 1;
 
-        // Ahorro por descuento
-        totalAhorroCupon += (precioOriginal - precioConDesc) * cantidad;
+        // Precio base (sin IVA) e IVA unitario según tipo
+        const precioBase  = tieneIVA ? precioConDesc / 1.15 : precioConDesc;
+        const ivaUnitario = tieneIVA ? precioConDesc - precioBase : precioConDesc * 0.15;
 
-        // IVA (15%)
-        const subtotalConDescuento = precioConDesc * cantidad;
-        let netoLinea, ivaLinea;
-        if (tieneIVA) {
-            netoLinea = subtotalConDescuento / 1.15;
-            ivaLinea  = subtotalConDescuento - netoLinea;
-        } else {
-            netoLinea = subtotalConDescuento;
-            ivaLinea  = subtotalConDescuento * 0.15;
-        }
-        totalValorNeto += netoLinea;
-        totalIVAGlobal += ivaLinea;
+        const subtotalBase = precioBase * cantidad;
+        const ivaSubtotal  = ivaUnitario * cantidad;
+
+        // Ahorraste: diferencia de precio mostrado (informativo)
+        totalAhorraste += (precioOriginal - precioConDesc) * cantidad;
+
+        totalValorNeto += subtotalBase;
+        totalIVAGlobal += ivaSubtotal;
+        totalFinalProv += subtotalBase + ivaSubtotal;
 
         // Precio visual: tachado si hay descuento
         let htmlPrecio;
@@ -956,11 +1008,53 @@ function actualizarshopCart() {
         `);
     });
 
-    const totalFinal = totalValorNeto + totalIVAGlobal - totalAhorroCupon;
+    // totalFinalProv ya se acumuló en el forEach
+
+    // Colapsar a 3 ítems si hay más
+    const VISIBLE_MAX = 3;
+    const $items = $('#coProductList .co-mini-item');
+    const totalProductos = $items.length;
+
+    if (totalProductos > VISIBLE_MAX) {
+        $items.slice(VISIBLE_MAX).hide();
+
+        const $toggle = $(`
+            <button type="button" class="co-list-toggle" id="btnToggleProductos">
+                <i class="bi bi-chevron-down"></i>
+                <span>Ver todos (${totalProductos} productos)</span>
+            </button>
+        `);
+
+        $toggle.on('click', function () {
+            const $btn   = $(this);
+            const $lista = $('#coProductList');
+            const abierto = $btn.hasClass('is-open');
+
+            if (abierto) {
+                $items.slice(VISIBLE_MAX).hide();
+                $lista.removeClass('is-expanded');
+                $btn.removeClass('is-open');
+                $btn.find('span').text(`Ver todos (${totalProductos} productos)`);
+            } else {
+                $items.slice(VISIBLE_MAX).show();
+                $lista.addClass('is-expanded');
+                $btn.addClass('is-open');
+                $btn.find('span').text('Ver menos');
+            }
+        });
+
+        $('#coListToggleArea').append($toggle);
+    }
 
     $("#coValorProductos").html(formatPrecioSuperscript(totalValorNeto));
     $("#coIVA").html(formatPrecioSuperscript(totalIVAGlobal));
-    $("#coTotalReferencial").html(formatPrecioSuperscript(totalFinal));
+    if (totalAhorraste > 0.005) {
+        $("#coAhorrasteRow").show();
+        $("#coAhorraste").html(`<span style="margin-right:2px;">−</span>${formatPrecioSuperscript(totalAhorraste)}`);
+    } else {
+        $("#coAhorrasteRow").hide();
+    }
+    $("#coTotalReferencial").html(formatPrecioSuperscript(totalFinalProv));
 
 
     actualizarIconoCarrito?.();
@@ -1104,14 +1198,8 @@ async function generarOrden() {
         // ✅ AJAX (usa .always para garantizar que se quite el spinner)
         $.post("api/v1/fulmuv/generarOrden", datos, function (response) {
             if (!response.error && response.success) {
-                Swal.fire({
-                    title: "¡Orden generada!",
-                    text: "Tu orden ha sido registrada exitosamente.",
-                    icon: "success",
-                    confirmButtonText: "Ver pedido"
-                }).then(() => {
-                    window.location.href = "seguimiento_pedido.php?q=" + response.numero_orden;
-                });
+                localStorage.removeItem("carrito");
+                window.location.href = "lista_pedidos.php?q=" + encodeURIComponent(response.numero_orden);
             } else {
                 Swal.fire({ title: "Error", text: response.msg, icon: "error", confirmButtonText: "Cerrar" });
             }

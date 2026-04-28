@@ -1,3 +1,12 @@
+function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
 /* ====================== Estado global ====================== */
 let itemsPerPage = 20;
 let currentPage = 1;
@@ -115,7 +124,7 @@ $(document).ready(function () {
     // ✅ SOLO 1 API PRINCIPAL
     $.get("api/v1/fulmuv/getServiciosEmergenciaAll/All", function (returnedData) {
         if (!returnedData.error) {
-            productosMaster = returnedData.data || [];
+            productosMaster = shuffleArray(returnedData.data || []);
             productosData = productosMaster;
 
             // Construcción inicial de filtros (desde MASTER)
@@ -737,13 +746,13 @@ function renderEmpresas(data, page = 1) {
             <h2 class="text-center">
               <a href="detalle_productos.php?q=${productos.id_producto}" target="_blank" rel="noopener noreferrer"
                  onclick="irADetalleProductoConTerminos(${productos.id_producto}); return false;"
-                 class="limitar-lineas mt-1">
+                 class="limitar-lineas mt-1 fw-normal">
                 ${capitalizarPrimeraLetra(productos.titulo_producto || productos.nombre || '')}
               </a>
             </h2>
             <div class="product-price mb-2 mt-0 text-center">
-              <span>${formatoMoneda.format(tieneDescuento ? precioDescuento : precioRef)}</span>
-              ${tieneDescuento ? `<span class="old-price">${formatoMoneda.format(precioRef)}</span>` : ''}
+              <span style="font-size:24px;">${formatPrecioSuperscript(tieneDescuento ? precioDescuento : precioRef)}</span>
+              ${tieneDescuento ? `<span class="old-price">${formatPrecioSuperscript(precioRef)}</span>` : ''}
             </div>
           </div>
         </div>
@@ -1042,7 +1051,8 @@ function filtrarDatasetParaOpciones(dataset, incluirPrecio = false) {
     const selCant = normalizarTexto(cantonSel.nombre);
 
     return (dataset || []).filter(prod => {
-        const matchSearch = !searchText || getBusquedaServicioScore(prod, searchText) > 0;
+        const prodNombreOpc = (prod.nombre || prod.titulo_producto || '').toLowerCase();
+        const matchSearch = !searchText || prodNombreOpc.includes(searchText.toLowerCase()) || String(prod.id_producto).includes(searchText);
 
         const matchTipo = categoriaInicialCumpleTipo(prod);
 

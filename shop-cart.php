@@ -760,7 +760,7 @@ echo '<input type="hidden" placeholder="" id="id_empresa" class="form-control" v
                         </div>
                         <div class="cscard-row cscard-row-savings">
                             <span class="cscard-label">
-                                <i class="fi fi-rs-label"></i> Descuento
+                                <i class="fi fi-rs-label"></i> Ahorraste
                             </span>
                             <span class="cscard-value" id="cart_ahorro_amount"></span>
                         </div>
