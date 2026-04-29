@@ -158,6 +158,8 @@ $(document).on("click", ".pagination .page-link", function (e) {
     if (!isNaN(page)) {
         currentPage = page;
         renderEmpresas(productosDataAll, currentPage);
+        const $target = $(".shop-product-fillter, .product-grid").first();
+        if ($target.length) $("html, body").animate({ scrollTop: $target.offset().top - 100 }, 400);
     }
 });
 

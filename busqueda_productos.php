@@ -14,41 +14,7 @@ $search = $_GET["search"] ?? "";
     }
 
     .smart-results-topbar {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 28px;
-    }
-
-    .smart-results-search-wrap {
-        position: relative;
-        width: min(100%, 580px);
-    }
-
-    .smart-results-search-input {
-        width: 100%;
-        height: 56px;
-        border-radius: 999px;
-        border: 1px solid #e2e8f0;
-        background: #fff;
-        padding: 0 58px 0 28px;
-        color: #0f172a;
-        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
-    }
-
-    .smart-results-search-input:focus {
-        outline: none;
-        border-color: #0d748a;
-        box-shadow: 0 0 0 4px rgba(13, 116, 138, 0.10), 0 20px 45px rgba(15, 23, 42, 0.08);
-    }
-
-    .smart-results-search-icon {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #0f172a;
-        font-size: 22px;
-        pointer-events: none;
+        margin-bottom: 10px;
     }
 
     .smart-results-layout {
@@ -271,6 +237,15 @@ $search = $_GET["search"] ?? "";
         font-size: 18px;
     }
 
+    .fulmuv-pgsearch-shell { position: relative; width: 100%; }
+    .fulmuv-pgsearch-input { display: block; width: 100%; min-height: 50px; border-radius: 16px !important; border: 1.5px solid #d7e2ea !important; background: linear-gradient(180deg, #ffffff 0%, #f8fbfd 100%); box-shadow: 0 6px 20px rgba(15,23,42,0.07); padding: 10px 44px 10px 52px !important; font-size: 14px; font-weight: 600; color: #0f172a; }
+    .fulmuv-pgsearch-input:focus { border-color: rgba(0,78,96,0.42) !important; box-shadow: 0 8px 28px rgba(0,78,96,0.12) !important; outline: none; }
+    .fulmuv-pgsearch-input::placeholder { color: #94a3b8; font-weight: 500; }
+    .fulmuv-pgsearch-brain { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: rgba(0,78,96,0.12); color: #004e60; pointer-events: none; font-size: 12px; }
+    .fulmuv-pgsearch-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: 0; border-radius: 999px; background: transparent; color: #94a3b8; display: none; align-items: center; justify-content: center; padding: 0; cursor: pointer; font-size: 12px; }
+    .fulmuv-pgsearch-clear.is-visible { display: inline-flex; }
+    .fulmuv-pgsearch-clear:hover { background: rgba(148,163,184,0.15); color: #0f172a; }
+
     .smart-results-pagination {
         display: flex;
         justify-content: center;
@@ -375,19 +350,27 @@ $search = $_GET["search"] ?? "";
 <section class="smart-results-shell">
     <div class="container">
         <div class="smart-results-topbar">
-            <div class="smart-results-search-wrap">
-                <input
-                    type="text"
-                    id="smartResultsSearchInput"
-                    class="smart-results-search-input"
-                    placeholder="Buscar por Nombre de Producto"
-                    value="<?php echo htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
-                <span class="smart-results-search-icon"><i class="fi-rs-search"></i></span>
+            <div class="archive-header-2 text-center mt-20">
+                <div class="row">
+                    <div class="col-lg-5 mx-auto">
+                        <div class="sidebar-widget-2 widget_search mb-20">
+                            <div class="fulmuv-pgsearch-shell">
+                                <span class="fulmuv-pgsearch-brain" aria-hidden="true">
+                                    <i class="fa-solid fa-brain"></i>
+                                </span>
+                                <input type="text" id="smartResultsSearchInput" class="fulmuv-pgsearch-input"
+                                    placeholder="Buscar por Nombre de Producto" autocomplete="off" />
+                                <button type="button" class="fulmuv-pgsearch-clear" aria-label="Limpiar búsqueda">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="smart-type-row" id="smartTypeTabs">
-            <button type="button" class="smart-type-card" data-search-type="all">Todos</button>
             <button type="button" class="smart-type-card is-active" data-search-type="products">Productos</button>
             <button type="button" class="smart-type-card" data-search-type="services">Servicios</button>
             <button type="button" class="smart-type-card" data-search-type="vehicles">Vehículos</button>

@@ -16381,30 +16381,12 @@ WHERE
 
     public function getOfertasImperdibles($conCantidad = true)
     {
-        $baseSelect = $conCantidad
-            ? "SELECT p.*, COUNT(*) AS cantidad_vendida"
-            : "SELECT DISTINCT p.id_empresa, p.id_producto, p.nombre, p.img_frontal, p.precio_referencia, p.categoria, p.tipo_creador";
-
-        $sql = "$baseSelect
-        FROM ordenes_empresas oe
-        JOIN JSON_TABLE(oe.productos, '$[*]' COLUMNS (prod_id INT PATH '$.id')) jt ON TRUE
-        JOIN productos p ON p.id_producto = jt.prod_id
-        WHERE oe.estado = 'A'
-          AND p.estado = 'A'
-          AND COALESCE(p.descuento, 0) > 0  -- 👈 SOLO productos con descuento
-          -- todas las categorías del producto deben ser tipo 'producto' y activas
-          AND NOT EXISTS (
-                SELECT 1
-                FROM categorias c
-                WHERE JSON_CONTAINS(p.categoria, JSON_QUOTE(CAST(c.id_categoria AS CHAR)), '$')
-                  AND (c.estado <> 'A' OR c.tipo <> 'producto')
-          )";
-
-        if ($conCantidad) {
-            $sql .= "
-            GROUP BY p.id_producto, p.nombre, p.img_frontal, p.precio_referencia
-            ORDER BY cantidad_vendida DESC";
-        }
+        // Productos activos con descuento > 0 (sin requerir órdenes ni tipo de categoría)
+        $sql = "SELECT p.*, 0 AS cantidad_vendida
+                FROM productos p
+                WHERE p.estado = 'A'
+                  AND CAST(COALESCE(NULLIF(TRIM(p.descuento), ''), '0') AS DECIMAL(10,2)) > 0
+                ORDER BY p.id_producto DESC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
@@ -16434,63 +16416,6 @@ WHERE
             }
         }
         $stmt->close();
-
-        // === Fallback: si no hay vendidos, devuelve 10 productos con descuento ===
-        if (empty($productos)) {
-            if ($conCantidad) {
-                $sqlFallback = "SELECT p.*, 0 AS cantidad_vendida
-                            FROM productos p
-                            WHERE p.estado = 'A'
-                              AND COALESCE(p.descuento, 0) > 0   -- 👈 también aquí
-                              AND NOT EXISTS (
-                                    SELECT 1
-                                    FROM categorias c
-                                    WHERE JSON_CONTAINS(p.categoria, JSON_QUOTE(CAST(c.id_categoria AS CHAR)), '$')
-                                      AND (c.estado <> 'A' OR c.tipo <> 'producto')
-                              )
-                            ORDER BY p.id_producto DESC
-                            LIMIT 10";
-            } else {
-                $sqlFallback = "SELECT p.id_empresa, p.id_producto, p.nombre, p.img_frontal, p.precio_referencia, p.categoria, p.tipo_creador
-                            FROM productos p
-                            WHERE p.estado = 'A'
-                              AND COALESCE(p.descuento, 0) > 0   -- 👈 y aquí
-                              AND NOT EXISTS (
-                                    SELECT 1
-                                    FROM categorias c
-                                    WHERE JSON_CONTAINS(p.categoria, JSON_QUOTE(CAST(c.id_categoria AS CHAR)), '$')
-                                      AND (c.estado <> 'A' OR c.tipo <> 'producto')
-                              )
-                            ORDER BY p.id_producto DESC
-                            LIMIT 10";
-            }
-
-            $stmt2 = $this->conn->prepare($sqlFallback);
-            $stmt2->execute();
-            $res2 = $stmt2->get_result();
-
-            while ($row = $res2->fetch_assoc()) {
-                $publicEmpresaId = $this->getPublicEmpresaIdForCreator($row["id_empresa"], $row["tipo_creador"] ?? "empresa");
-                if ($publicEmpresaId <= 0) {
-                    continue;
-                }
-
-                if (!isset($vistos[$row['id_producto']])) {
-                    $row["marca"]          = $this->getMarcaByArray($row["id_marca"]);
-                    $row["modelo"]         = $this->getModeloByArray($row["id_modelo"]);
-                    $row["tipo_autoo"]     = $this->getTipoAutoByArray($row["tipo_auto"]);
-                    $row["tipo_fraccionn"] = $this->getTipoTraccionByArray($row["tipo_traccion"]);
-                    $row["categorias"]     = $this->getCategoriaByArray($row["categoria"]);
-                    $row["subcategorias"]  = $this->getSubCategoriaByArray($row["sub_categoria"]);
-                    $row["verificacion"]   = $this->getVerificacionCuentaEmpresa($publicEmpresaId);
-                    $row["membresia"]      = $this->getMembresiaByEmpresa($publicEmpresaId);
-
-                    $productos[] = $row;
-                    $vistos[$row['id_producto']] = true;
-                }
-            }
-            $stmt2->close();
-        }
 
         return $productos;
     }
@@ -17355,9 +17280,8 @@ WHERE
         $stmt->bind_param("i", $id_cliente);
         $stmt->execute();
         $result = $stmt->get_result();
-        if ($row = $result->fetch_assoc()) {
+        while ($row = $result->fetch_assoc()) {
             $response[] = $row;
-            //return $row;
         }
         return $response;
     }

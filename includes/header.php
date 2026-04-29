@@ -1363,7 +1363,7 @@ $frontUserLoggedIn = isset($_SESSION["id_usuario"]) && (
         .smart-search-card-title {
             margin: 0;
             font-size: 15px;
-            font-weight: 900;
+            font-weight: 400;
             line-height: 1.35;
             color: #0f172a;
             display: -webkit-box;
@@ -1375,9 +1375,9 @@ $frontUserLoggedIn = isset($_SESSION["id_usuario"]) && (
         .smart-search-card-subtitle,
         .smart-search-card-price {
             margin: 0;
-            font-size: 13px;
+            font-size: 11px;
             color: #64748b;
-            line-height: 1.45;
+            line-height: 1.4;
         }
 
         .smart-search-card-subtitle {
@@ -1386,15 +1386,15 @@ $frontUserLoggedIn = isset($_SESSION["id_usuario"]) && (
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            min-height: calc(1.45em * 2);
+            min-height: calc(1.4em * 2);
             white-space: normal;
             word-break: break-word;
         }
 
         .smart-search-card-price {
-            font-size: 16px;
+            font-size: 14px;
             color: #004e60;
-            font-weight: 900;
+            font-weight: 400;
         }
 
         .smart-search-card-action {

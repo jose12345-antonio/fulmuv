@@ -931,7 +931,7 @@
 
         function productCard(item, badge, actionText) {
             const title = capitalizarPrimeraLetra(item.titulo_producto || item.nombre || "");
-            const price = item.precio_referencia ? `<p class="smart-search-card-price">${formatPrice(item.precio_referencia)}</p>` : "";
+            const price = item.precio_referencia ? `<p class="smart-search-card-price">${formatPrecioSuperscript(item.precio_referencia)}</p>` : "";
             const cleanDescription = stripHtml(item.descripcion || "");
             const subtitle = cleanDescription ? `<p class="smart-search-card-subtitle limitar-lineas-3">${escapeHtml(cleanDescription)}</p>` : "";
             const img = normalizarImagenAdmin(item.img_frontal);
@@ -968,7 +968,7 @@
                         <span class="smart-search-card-badge">Vehículo</span>
                         <h4 class="smart-search-card-title">${escapeHtml(title)}</h4>
                         <p class="smart-search-card-subtitle">${escapeHtml(subtitle || "Disponible para revisión")}</p>
-                        <p class="smart-search-card-price">${formatPrice(item.precio_referencia)}</p>
+                        <p class="smart-search-card-price">${formatPrecioSuperscript(item.precio_referencia)}</p>
                         <a href="detalle_vehiculo.php?q=${item.id_vehiculo}" class="smart-search-card-action">Ver vehículo</a>
                     </div>
                 </article>

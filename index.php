@@ -2302,31 +2302,31 @@ include 'includes/footer.php';
                         : "";
 
                     $slider.append(`
-                        <div class="px-1">
-                            <div class="home-vehicle-card">
-                                <a class="home-vehicle-media" href="detalle_vehiculo.php?q=${data.id_vehiculo}" target="_blank" rel="noopener noreferrer">
-                                    ${verificacion}
-                                    ${tieneDesc ? `<span class="home-card-badge">-${parseInt(data.descuento)}%</span>` : ""}
-                                    <img src="${img}" alt="${modelo}" onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';">
-                                </a>
-                                <div class="home-vehicle-content d-flex flex-column">
-                                    <div class="home-vehicle-meta">
-                                        <span>${marca || 'Sin marca'}</span>
-                                        <span>${anio || 'Sin año'}</span>
-                                    </div>
-                                    <a class="home-card-link" href="detalle_vehiculo.php?q=${data.id_vehiculo}" target="_blank" rel="noopener noreferrer">
-                                        <div class="home-vehicle-title">${modelo || 'Vehículo sin modelo'}</div>
+                        <div class="product-cart-wrap">
+                            <div class="product-img-action-wrap">
+                                ${verificacion}
+                                <div class="product-img product-img-zoom">
+                                    <a href="detalle_vehiculo.php?q=${data.id_vehiculo}" target="_blank" rel="noopener noreferrer">
+                                        <img class="default-img" src="${img}" alt="${modelo}"
+                                            onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';"
+                                            style="height:150px;object-fit:cover;" />
                                     </a>
-                                    <div class="home-vehicle-meta">
-                                        <span><i class="fi-rs-marker"></i> ${prov || '—'}${canton ? ` · ${canton}` : ''}</span>
-                                        <span><i class="fi-rs-dashboard"></i> ${kms}</span>
-                                    </div>
-                                    <div class="mt-auto">
-                                        <div class="home-vehicle-price">
-                                            <span>${formatPrecioSuperscript(tieneDesc ? precioConDesc : data.precio_referencia)}</span>
-                                            ${tieneDesc ? `<span class="old-price">${formatoMoneda.format(data.precio_referencia)}</span>` : ''}
-                                        </div>
-                                    </div>
+                                </div>
+                                ${tieneDesc ? `<div class="product-badges product-badges-position product-badges-mrg"><span class="best">-${parseInt(data.descuento)}%</span></div>` : ''}
+                            </div>
+                            <div class="product-content-wrap p-1">
+                                <div class="text-muted small text-center">${marca}${anio ? ` · ${anio}` : ''}</div>
+                                <h2 class="text-center">
+                                    <a href="detalle_vehiculo.php?q=${data.id_vehiculo}" target="_blank" rel="noopener noreferrer" class="limitar-lineas mt-1 fw-normal">
+                                        ${modelo || 'Vehículo'}
+                                    </a>
+                                </h2>
+                                <div class="text-muted small text-center mb-1">
+                                    <i class="fi-rs-marker"></i> ${prov || '—'}${canton ? ` · ${canton}` : ''} &nbsp; <i class="fi-rs-dashboard"></i> ${kms}
+                                </div>
+                                <div class="product-price mb-2 mt-0 text-center">
+                                    <span>${formatPrecioSuperscript(tieneDesc ? precioConDesc : data.precio_referencia)}</span>
+                                    ${tieneDesc ? `<span class="old-price">${formatoMoneda.format(data.precio_referencia)}</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -2637,38 +2637,38 @@ include 'includes/footer.php';
                 const provincia = safeText(data.provincia);
                 const canton = safeText(data.canton);
                 $slider.append(`
-        <div class="px-1">
-          <div class="home-event-card">
-            <div class="position-relative">
-              <a href="detalle_eventos.php?q=${data.id_evento}" class="home-event-media">
-                <img
-                  src="admin/${data.imagen}"
-                  alt="${capitalizarPrimeraLetra(data.titulo)}"
-                  onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';"
-                />
-              </a>
-              <span
-                class="home-card-badge"
-                data-countdown="1"
-                data-id="${data.id_evento}"
-                data-inicio="${data.fecha_hora_inicio || ""}"
-                data-fin="${data.fecha_hora_fin || ""}"
-              >
-                <i class="bi bi-clock me-1"></i>${countdownLabel}
-              </span>
-            </div>
-            <div class="home-event-content d-flex flex-column">
-              <a href="detalle_eventos.php?q=${data.id_evento}" class="home-card-link">
-                <div class="home-event-title">${capitalizarPrimeraLetra(data.titulo)}</div>
-              </a>
-              <div class="home-event-meta">
-                <span><i class="fi-rs-marker"></i> ${provincia}</span>
-                <span>${canton}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      `);
+                    <div class="product-cart-wrap">
+                        <div class="product-img-action-wrap">
+                            <div class="product-img product-img-zoom">
+                                <a href="detalle_eventos.php?q=${data.id_evento}">
+                                    <img class="default-img" src="admin/${data.imagen}"
+                                        alt="${capitalizarPrimeraLetra(data.titulo)}"
+                                        onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';"
+                                        style="height:150px;object-fit:cover;" />
+                                </a>
+                            </div>
+                            <div class="product-badges product-badges-position product-badges-mrg">
+                                <span class="hot"
+                                    data-countdown="1"
+                                    data-id="${data.id_evento}"
+                                    data-inicio="${data.fecha_hora_inicio || ''}"
+                                    data-fin="${data.fecha_hora_fin || ''}">
+                                    <i class="bi bi-clock me-1"></i>${countdownLabel}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="product-content-wrap p-1">
+                            <h2 class="text-center">
+                                <a href="detalle_eventos.php?q=${data.id_evento}" class="limitar-lineas mt-1 fw-normal">
+                                    ${capitalizarPrimeraLetra(data.titulo)}
+                                </a>
+                            </h2>
+                            <div class="text-muted small text-center mb-2">
+                                <i class="fi-rs-marker"></i> ${provincia}${canton ? ` · ${canton}` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `);
             });
 
             // 4) Inicializar slick SOLO si hay visibles
@@ -2769,26 +2769,33 @@ include 'includes/footer.php';
                 const canton = safeText(data.canton);
 
                 $slider.append(`
-                <div class="px-1">
-                <div class="home-job-card">
-                    <a href="empleos.php" class="home-job-media text-decoration-none">
-                    <span class="home-card-badge"><i class="fi-rs-check me-1"></i>Disponible</span>
-                    <img class="img-fluid"
-                        src="admin/${data.img_frontal}"
-                        alt="${capitalizarPrimeraLetra(data.titulo)}"
-                        onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';" />
-                    </a>
-                    <div class="home-job-content d-flex flex-column">
-                    <a href="empleos.php" class="home-card-link">
-                        <div class="home-job-title">${capitalizarPrimeraLetra(data.titulo)}</div>
-                    </a>
-                    <div class="home-job-meta">
-                        <span><i class="fi-rs-marker me-1"></i>${capitalizarPrimeraLetra(provincia)} · ${capitalizarPrimeraLetra(canton)}</span>
+                    <div class="product-cart-wrap">
+                        <div class="product-img-action-wrap">
+                            <div class="product-img product-img-zoom">
+                                <a href="empleos.php">
+                                    <img class="default-img"
+                                        src="admin/${data.img_frontal}"
+                                        alt="${capitalizarPrimeraLetra(data.titulo)}"
+                                        onerror="this.onerror=null;this.src='img/FULMUV-NEGRO.png';"
+                                        style="height:150px;object-fit:cover;" />
+                                </a>
+                            </div>
+                            <div class="product-badges product-badges-position product-badges-mrg">
+                                <span class="best"><i class="fi-rs-check me-1"></i>Disponible</span>
+                            </div>
+                        </div>
+                        <div class="product-content-wrap p-1">
+                            <h2 class="text-center">
+                                <a href="empleos.php" class="limitar-lineas mt-1 fw-normal">
+                                    ${capitalizarPrimeraLetra(data.titulo)}
+                                </a>
+                            </h2>
+                            <div class="text-muted small text-center mb-2">
+                                <i class="fi-rs-marker me-1"></i>${capitalizarPrimeraLetra(provincia)}${canton ? ` · ${capitalizarPrimeraLetra(canton)}` : ''}
+                            </div>
+                        </div>
                     </div>
-                    </div>
-                </div>
-                </div>
-            `);
+                `);
             });
 
             // 4) Inicializar slick

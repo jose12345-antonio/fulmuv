@@ -39,6 +39,8 @@ let filtroTextoMarca = "";
 let filtroTextoModelo = "";
 let filtroTextoCategoria = "";
 let filtroTextoSubcategoria = "";
+let filtroTextoNombreServicio = "";
+let nombresServicioSeleccionados = new Set();
 
 let precioMin = 0;
 let precioMax = Infinity;
@@ -165,7 +167,8 @@ function applyFilterOptionSearch(tipo, valor) {
         marca: "#filtro-marca",
         modelo: "#filtro-modelo",
         categoria: "#filtro-categorias",
-        subcategoria: "#filtro-sub-categorias"
+        subcategoria: "#filtro-sub-categorias",
+        nombre_servicio: "#filtro-nombre-servicio"
     };
     const container = $(targetMap[tipo] || "");
     if (!container.length) return;
@@ -244,33 +247,28 @@ function getBusquedaProductoScore(prod, text) {
  *  - 'modelo': ignora filtro modelo (para calcular opciones de modelo)
  */
 function applyFilters(dataset, skipFacet = null) {
-    const selectedCatsSet = new Set(subcategoriasSeleccionadas.map(Number));        // categorías
-    const selectedSubSet = new Set(subcategoriasHijasSeleccionadas.map(Number));    // subcategorías
-
+    const selectedCatsSet = new Set(subcategoriasSeleccionadas.map(Number));
+    const selectedSubSet = new Set(subcategoriasHijasSeleccionadas.map(Number));
     const selProv = normalizarTexto(provinciaSel.nombre);
     const selCant = normalizarTexto(cantonSel.nombre);
 
     return (dataset || []).filter(prod => {
-        // tipo
         if (!categoriaInicialCumpleTipo(prod)) return false;
-
-        // búsqueda
         if (!matchBusquedaProducto(prod, searchText)) return false;
 
         // categorías/subcategorías
-        const prodCats = parseIdsArray(prod.categoria ?? prod.id_categoria);
-        const prodSubs = parseIdsArray(prod.sub_categoria ?? prod.id_subcategoria ?? prod.id_sub_categoria);
-
-        const matchCat = (selectedCatsSet.size === 0) || hasIntersection(prodCats, selectedCatsSet);
-        if (!matchCat) return false;
-
-        const matchSub = (selectedSubSet.size === 0) || hasIntersection(prodSubs, selectedSubSet);
-        if (!matchSub) return false;
+        if (skipFacet !== 'categoria') {
+            const prodCats = parseIdsArray(prod.categoria ?? prod.id_categoria);
+            const prodSubs = parseIdsArray(prod.sub_categoria ?? prod.id_subcategoria ?? prod.id_sub_categoria);
+            const matchCat = (selectedCatsSet.size === 0) || hasIntersection(prodCats, selectedCatsSet);
+            if (!matchCat) return false;
+            const matchSub = (selectedSubSet.size === 0) || hasIntersection(prodSubs, selectedSubSet);
+            if (!matchSub) return false;
+        }
 
         // marca/modelo
         const prodBrandIds = parseIdsArray(prod.id_marca).map(String);
         const prodModelIds = parseIdsArray(prod.id_modelo).map(String);
-
         if (skipFacet !== 'marca') {
             const matchMarca = (marcasSeleccionadas.size === 0) || prodBrandIds.some(id => marcasSeleccionadas.has(id));
             if (!matchMarca) return false;
@@ -281,8 +279,18 @@ function applyFilters(dataset, skipFacet = null) {
         }
 
         // precio
-        const precio = Number(prod.precio_referencia);
-        if (!(precio >= precioMin && precio <= precioMax)) return false;
+        if (skipFacet !== 'precio') {
+            const precio = Number(prod.precio_referencia);
+            if (!(precio >= precioMin && precio <= precioMax)) return false;
+        }
+
+        // nombre servicio
+        if (skipFacet !== 'nombre') {
+            if (nombresServicioSeleccionados.size > 0) {
+                const nombreNorm = normalizarTexto(prod.nombre || prod.titulo_producto || '');
+                if (!nombresServicioSeleccionados.has(nombreNorm)) return false;
+            }
+        }
 
         // ubicación
         const pProv = normalizarTexto(prod.provincia);
@@ -357,6 +365,63 @@ function refreshBrandModelFacets() {
     renderCheckboxMarcas(marcasUnicas);
     renderCheckboxModelos(modelosUnicos);
 }
+
+/* ====================== Nombres de Servicio ====================== */
+function buildNombresServicioFromDataset(data) {
+    const seen = new Map();
+    (data || []).forEach(p => {
+        const nombre = (p.nombre || p.titulo_producto || '').trim();
+        if (!nombre) return;
+        const key = normalizarTexto(nombre);
+        if (!seen.has(key)) seen.set(key, nombre);
+    });
+    return Array.from(seen.entries())
+        .map(([key, nombre]) => ({ key, nombre }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+
+function renderCheckboxNombresServicio(nombres) {
+    if (!nombres || nombres.length === 0) {
+        $("#filtro-nombre-servicio").empty();
+        toggleFilterBlock('#filtro-nombre-servicio', false);
+        return;
+    }
+    toggleFilterBlock('#filtro-nombre-servicio', true);
+
+    let html = renderFilterSearchInput("nombre_servicio", "Buscar nombre", filtroTextoNombreServicio) + `
+    <div class="form-check mb-2">
+      <input class="form-check-input chk-nombre-servicio" type="checkbox" id="nombre-all" value="__all__" ${nombresServicioSeleccionados.size === 0 ? 'checked' : ''}>
+      <label class="form-check-label fw-normal" for="nombre-all">Todos</label>
+    </div>`;
+
+    nombres.forEach(item => {
+        const safeKey = escapeHtmlAttribute(item.key);
+        html += `
+      <div class="form-check mb-2 filter-option-row" data-filter-search-text="${escapeHtmlAttribute(normalizarTexto(item.nombre))}">
+        <input class="form-check-input chk-nombre-servicio" type="checkbox" id="nombre-svc-${safeKey}" value="${safeKey}" ${nombresServicioSeleccionados.has(item.key) ? 'checked' : ''}>
+        <label class="form-check-label fw-normal" for="nombre-svc-${safeKey}">
+          ${capitalizarPrimeraLetra(item.nombre)}
+        </label>
+      </div>`;
+    });
+    html += `<small class="text-muted filter-option-empty" style="display:none;">No hay servicios.</small>`;
+    $("#filtro-nombre-servicio").html(html);
+}
+
+$(document).on("change", ".chk-nombre-servicio", function () {
+    const val = String($(this).val());
+    if (val === "__all__") {
+        nombresServicioSeleccionados.clear();
+        $(".chk-nombre-servicio").not(this).prop("checked", false);
+        $(this).prop("checked", true);
+    } else {
+        $("#nombre-all").prop("checked", false);
+        if ($(this).is(":checked")) nombresServicioSeleccionados.add(val);
+        else nombresServicioSeleccionados.delete(val);
+        if (nombresServicioSeleccionados.size === 0) $("#nombre-all").prop("checked", true);
+    }
+    refreshAllUIFromCurrentState(false);
+});
 
 /* ====================== Render Marcas/Modelos CHECKBOX ====================== */
 function renderCheckboxMarcas(marcas) {
@@ -472,12 +537,10 @@ function renderCheckboxCategorias(categorias) {
     }
     toggleFilterBlock('#filtro-categorias', true);
 
-    let htmlVisible = '';
-    let htmlOcultas = '';
-    const maxVisible = 10;
+    let htmlItems = '';
 
-    categorias.forEach((cat, index) => {
-        const checkboxHTML = `
+    categorias.forEach(cat => {
+        htmlItems += `
       <div class="form-check mb-3 filter-option-row" data-filter-search-text="${escapeHtmlAttribute(normalizarTexto(capitalizarPrimeraLetra(cat.nombre)))}">
         <input class="form-check-input" type="checkbox" value="${cat.id_categoria}" id="categoria-${cat.id_categoria}" name="checkbox"
           ${subcategoriasSeleccionadas.map(Number).includes(Number(cat.id_categoria)) ? 'checked' : ''}>
@@ -485,28 +548,15 @@ function renderCheckboxCategorias(categorias) {
           ${capitalizarPrimeraLetra(cat.nombre)}
         </label>
       </div>`;
-        if (index < maxVisible) htmlVisible += checkboxHTML; else htmlOcultas += checkboxHTML;
     });
 
     const htmlFinal = `
     ${renderFilterSearchInput("categoria", "Buscar categoría", filtroTextoCategoria)}
-    <div class="checkbox-list-visible">${htmlVisible}</div>
-    <div class="more_slide_open-cat" style="display:none;">${htmlOcultas}</div>
-    <small class="text-muted filter-option-empty" style="display:none;">No hay categorías.</small>
-    ${htmlOcultas ? `
-      <div class="more_categories-cat cursor-pointer">
-        <span class="icon">+</span>
-        <span class="heading-sm-1">Show more...</span>
-      </div>` : ''}`;
+    ${htmlItems}
+    <small class="text-muted filter-option-empty" style="display:none;">No hay categorías.</small>`;
 
     $("#filtro-categorias").html(htmlFinal);
     applyFilterOptionSearch("categoria", filtroTextoCategoria);
-
-    $(document).off("click.moreCat", "#filtro-categorias .more_categories-cat")
-        .on("click.moreCat", "#filtro-categorias .more_categories-cat", function () {
-            $(this).toggleClass("show");
-            $(this).prev(".more_slide_open-cat").slideToggle();
-        });
 }
 
 // Al cambiar categorías: SOLO estado + subcats local + re-render
@@ -713,14 +763,10 @@ function inicializarSlider(maxPrecio) {
         precioMax = parseFloat(window.moneyFormat.from(values[1]));
     });
 
-    // ✅ Solo cuando suelta el handle (change) aplicas filtros
     sliderElement.noUiSlider.on("change", function () {
-        // Evita spam de renders si el usuario mueve rápido
         clearTimeout(sliderRefreshTimer);
         sliderRefreshTimer = setTimeout(() => {
-            // aquí NO reconstruyas slider
-            refreshBrandModelFacets();     // disminuye filtros marca/modelo
-            renderEmpresas(productosData, 1);
+            refreshAllUIFromCurrentState(false);
         }, 80);
     });
 }
@@ -811,7 +857,17 @@ function renderEmpresas(data, page = 1) {
       </div>`;
     });
 
-    $("#totalProductosGeneral").text(filtrado.length);
+    const totalFiltrado = filtrado.length;
+    if (totalFiltrado === 0) {
+        $("#totalProductosGeneral").closest("h5, p").html(
+            `Encontramos <strong class="text-brand" id="totalProductosGeneral">0</strong> servicios para ti!`
+        );
+    } else {
+        const rangeStart = Math.floor((totalFiltrado - 1) / 10) * 10 + 1;
+        $("#totalProductosGeneral").closest("h5, p").html(
+            `Encontramos más de <strong class="text-brand" id="totalProductosGeneral">${rangeStart}</strong> servicios para ti!`
+        );
+    }
     $(".product-grid").html(listProductos || `
     <div class="col-12 text-center">
       <p class="text-muted">No hay resultados con los filtros seleccionados.</p>
@@ -853,24 +909,23 @@ $(document).off("input.filterOptionSearchServicios").on("input.filterOptionSearc
     if (tipo === "modelo") filtroTextoModelo = valor;
     if (tipo === "categoria") filtroTextoCategoria = valor;
     if (tipo === "subcategoria") filtroTextoSubcategoria = valor;
+    if (tipo === "nombre_servicio") filtroTextoNombreServicio = valor;
     applyFilterOptionSearch(tipo, valor);
 });
 
 /* ====================== UI global refresh ====================== */
 function refreshAllUIFromCurrentState(firstLoad = false) {
-    const locData = filtrarPorUbicacionDataset(productosData);
-
-    const precios = (locData || [])
+    // Slider: excluye filtro de precio para calcular el máximo real disponible
+    const precioData = applyFilters(productosData, 'precio');
+    const precios = (precioData || [])
         .map(p => Number(p.precio_referencia))
         .filter(n => Number.isFinite(n) && n > 0);
-
     const maxPrecio = precios.length ? Math.max(...precios) : 0;
-
-    // ✅ Esto ya no entra en loop, porque inicializarSlider no se recrea si max no cambia
     inicializarSlider(maxPrecio);
 
-    // ... el resto igual (catsIndex, categorias, subcats, facets, grid)
-    catsIndex = buildCatsAndSubcatsFromProductos(locData);
+    // Categorías: excluye filtro de categoría para mostrar todas las disponibles con otros filtros
+    const catData = applyFilters(productosData, 'categoria');
+    catsIndex = buildCatsAndSubcatsFromProductos(catData);
     categoriasFiltradas = catsIndex.categoriasLista || [];
 
     const catDisponibles = new Set(categoriasFiltradas.map(c => Number(c.id_categoria)));
@@ -885,6 +940,14 @@ function refreshAllUIFromCurrentState(firstLoad = false) {
 
     renderCheckboxSubcategorias(subcategoriasHijas);
     $("#subcats-box").toggle(subcategoriasHijas.length > 0);
+
+    // Nombres: excluye filtro de nombre para mostrar todos los disponibles con otros filtros
+    const nombreData = applyFilters(productosData, 'nombre');
+    const nombresDisponibles = buildNombresServicioFromDataset(nombreData);
+    nombresServicioSeleccionados = new Set(
+        [...nombresServicioSeleccionados].filter(k => nombresDisponibles.some(n => n.key === k))
+    );
+    renderCheckboxNombresServicio(nombresDisponibles);
 
     refreshBrandModelFacets();
 
@@ -915,6 +978,8 @@ $(document).on("click", ".pagination .page-link", function (e) {
     if (!isNaN(page)) {
         currentPage = page;
         renderEmpresas(productosData, currentPage);
+        const $target = $(".shop-product-fillter, .product-grid").first();
+        if ($target.length) $("html, body").animate({ scrollTop: $target.offset().top - 100 }, 400);
     }
 });
 

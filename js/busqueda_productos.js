@@ -72,6 +72,8 @@ const SEARCH_PAGE_TYPES = {
     }
 };
 
+let sliderMaxActual = null;
+
 const SEARCH_PAGE_STATE = {
     search: "",
     secondarySearch: "",
@@ -118,9 +120,8 @@ const SEARCH_PAGE_STATE = {
 
 $(document).ready(function() {
     SEARCH_PAGE_STATE.search = String($("#search").val() || "").trim();
-    SEARCH_PAGE_STATE.secondarySearch = SEARCH_PAGE_STATE.search;
+    SEARCH_PAGE_STATE.secondarySearch = "";
     SEARCH_PAGE_STATE.activeType = getTypeFromHash();
-    $("#smartResultsSearchInput").val(SEARCH_PAGE_STATE.search);
     $("#smartItemsPerPage").val(String(SEARCH_PAGE_STATE.itemsPerPage));
 
     bindSearchResultsEvents();
@@ -134,13 +135,15 @@ function bindSearchResultsEvents() {
 
         SEARCH_PAGE_STATE.activeType = nextType;
         SEARCH_PAGE_STATE.currentPage = 1;
+        sliderMaxActual = null;
         resetSearchFilters();
-        renderSearchResultsPage();
+        const q = SEARCH_PAGE_STATE.secondarySearch || SEARCH_PAGE_STATE.search;
+        loadDataForActiveType(q);
     });
 
     $(document).on("click", ".smart-type-card", function() {
         const nextType = $(this).data("search-type");
-        if (!SEARCH_PAGE_TYPES[nextType]) return;
+        if (!SEARCH_PAGE_TYPES[nextType] || nextType === SEARCH_PAGE_STATE.activeType) return;
         window.location.hash = getHashForType(nextType);
     });
 
@@ -160,16 +163,12 @@ function bindSearchResultsEvents() {
     $("#smartResultsSearchInput").on("input", function() {
         SEARCH_PAGE_STATE.secondarySearch = $(this).val().trim();
         SEARCH_PAGE_STATE.currentPage = 1;
+        $(".fulmuv-pgsearch-clear").toggleClass("is-visible", $(this).val().length > 0);
         renderSearchResultsPage();
     });
 
-    $("#smartResultsSearchInput").on("keydown", function(e) {
-        if (e.key === "Enter" || e.which === 13) {
-            e.preventDefault();
-            SEARCH_PAGE_STATE.secondarySearch = $(this).val().trim();
-            SEARCH_PAGE_STATE.currentPage = 1;
-            renderSearchResultsPage();
-        }
+    $(document).on("click", ".fulmuv-pgsearch-clear", function() {
+        $("#smartResultsSearchInput").val("").trigger("input");
     });
 
     $("#smartSortSelect").on("change", function() {
@@ -324,6 +323,28 @@ function loadSearchResults() {
         });
 }
 
+function loadDataForActiveType(query) {
+    const type = SEARCH_PAGE_STATE.activeType;
+    let request;
+
+    if (type === "vehicles") {
+        request = $.get(SEARCH_PAGE_TYPES.vehicles.searchEndpoint, null, null, "json");
+    } else if (type === "services") {
+        request = $.post(SEARCH_PAGE_TYPES.services.searchEndpoint, { search: query }, null, "json");
+    } else {
+        request = $.post(SEARCH_PAGE_TYPES.products.searchEndpoint, { search: query }, null, "json");
+    }
+
+    request.done(function(res) {
+        const data = res && Array.isArray(res.data) ? res.data : [];
+        if (type === "products" || type === "services" || type === "vehicles") {
+            SEARCH_PAGE_STATE.raw[type] = data;
+        }
+        SEARCH_PAGE_STATE.currentPage = 1;
+        renderSearchResultsPage();
+    });
+}
+
 function resetSearchFilters() {
     SEARCH_PAGE_STATE.filters.sort = "relevance";
     SEARCH_PAGE_STATE.filters.location = "";
@@ -345,7 +366,7 @@ function resetSearchFilters() {
     SEARCH_PAGE_STATE.optionSearch.reference = "";
     SEARCH_PAGE_STATE.optionSearch.color = "";
     SEARCH_PAGE_STATE.optionSearch.tapiceria = "";
-    SEARCH_PAGE_STATE.secondarySearch = SEARCH_PAGE_STATE.search;
+    SEARCH_PAGE_STATE.secondarySearch = "";
     SEARCH_PAGE_STATE.currentPage = 1;
 
     $("#smartSortSelect").val("relevance");
@@ -359,14 +380,15 @@ function resetSearchFilters() {
     $("#smartFilterSearchTapiceria").val("");
     $("#smartYearMin").val("");
     $("#smartYearMax").val("");
-    $("#smartResultsSearchInput").val(SEARCH_PAGE_STATE.search);
+    $("#smartResultsSearchInput").val("");
+    $(".fulmuv-pgsearch-clear").removeClass("is-visible");
 }
 
 function renderSearchResultsPage() {
     const config = getTypeConfig(SEARCH_PAGE_STATE.activeType);
     const activeData = getActiveData();
 
-    syncSliderBounds(activeData);
+    syncSliderBounds();
     renderTypeTabs();
     renderLocationOptions(activeData);
     renderBrandOptions();
@@ -376,7 +398,7 @@ function renderSearchResultsPage() {
     renderReferenceOptions();
     renderColorOptions();
     renderTapiceriaOptions();
-    syncYearInputs(activeData);
+    syncYearInputs();
     renderFilterVisibility(config);
     renderSearchPlaceholder();
 
@@ -423,8 +445,17 @@ function ensureFirstVisibleFilterOpen() {
 }
 
 function renderHeading(total) {
-    const query = SEARCH_PAGE_STATE.secondarySearch || SEARCH_PAGE_STATE.search;
-    $("#searchResultsHeading").text(`Encontramos ${total} resultados para ti`);
+    const type = SEARCH_PAGE_STATE.activeType;
+    const label = type === "services" ? "servicios" : type === "vehicles" ? "vehículos" : "productos";
+    const query = SEARCH_PAGE_STATE.secondarySearch;
+    let msg;
+    if (total === 0) {
+        msg = `No encontramos ${label} para ti`;
+    } else {
+        const rangeStart = Math.floor((total - 1) / 10) * 10 + 1;
+        msg = `Encontramos más de ${rangeStart} ${label} para ti!`;
+    }
+    $("#searchResultsHeading").text(msg);
     $("#searchResultsEmptyText").text(`No encontramos coincidencias para "${query}" con los filtros actuales.`);
 }
 
@@ -461,70 +492,77 @@ function renderLocationOptions(data) {
 }
 
 function renderBrandOptions() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'brands');
     renderCheckboxOptions({
         target: "#smartBrandOptions",
         filterType: "brands",
-        values: uniqueOptionList(collectOptionValues(getActiveData(), getBrandNames)),
+        values: uniqueOptionList(collectOptionValues(d, getBrandNames)),
         search: SEARCH_PAGE_STATE.optionSearch.brand,
         emptyText: "No hay marcas disponibles."
     });
 }
 
 function renderModelOptions() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'models');
     renderCheckboxOptions({
         target: "#smartModelOptions",
         filterType: "models",
-        values: uniqueOptionList(collectOptionValues(getActiveData(), getModelNames)),
+        values: uniqueOptionList(collectOptionValues(d, getModelNames)),
         search: SEARCH_PAGE_STATE.optionSearch.model,
         emptyText: "No hay modelos disponibles."
     });
 }
 
 function renderCategoryOptions() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'categories');
     renderCheckboxOptions({
         target: "#smartCategoryOptions",
         filterType: "categories",
-        values: uniqueOptionList(collectOptionValues(getActiveData(), getCategoryNames)),
+        values: uniqueOptionList(collectOptionValues(d, getCategoryNames)),
         search: SEARCH_PAGE_STATE.optionSearch.category,
         emptyText: "No hay categorías disponibles."
     });
 }
 
 function renderServiceNameOptions() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'serviceNames');
     renderCheckboxOptions({
         target: "#smartServiceNameOptions",
         filterType: "serviceNames",
-        values: uniqueOptionList(collectOptionValues(getActiveData(), getServiceNames)),
+        values: uniqueOptionList(collectOptionValues(d, getServiceNames)),
         search: SEARCH_PAGE_STATE.optionSearch.serviceName,
         emptyText: "No hay nombres de servicio disponibles."
     });
 }
 
 function renderReferenceOptions() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'references');
     renderCheckboxOptions({
         target: "#smartReferenceOptions",
         filterType: "references",
-        values: uniqueOptionList(collectOptionValues(getActiveData(), getReferenceNames)),
+        values: uniqueOptionList(collectOptionValues(d, getReferenceNames)),
         search: SEARCH_PAGE_STATE.optionSearch.reference,
         emptyText: "No hay referencias disponibles."
     });
 }
 
 function renderColorOptions() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'colors');
     renderCheckboxOptions({
         target: "#smartColorOptions",
         filterType: "colors",
-        values: uniqueOptionList(collectOptionValues(getActiveData(), getColorNames)),
+        values: uniqueOptionList(collectOptionValues(d, getColorNames)),
         search: SEARCH_PAGE_STATE.optionSearch.color,
         emptyText: "No hay colores disponibles."
     });
 }
 
 function renderTapiceriaOptions() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'tapicerias');
     renderCheckboxOptions({
         target: "#smartTapiceriaOptions",
         filterType: "tapicerias",
-        values: uniqueOptionList(collectOptionValues(getActiveData(), getTapiceriaNames)),
+        values: uniqueOptionList(collectOptionValues(d, getTapiceriaNames)),
         search: SEARCH_PAGE_STATE.optionSearch.tapiceria,
         emptyText: "No hay tapicerías disponibles."
     });
@@ -569,8 +607,9 @@ function renderCheckboxOptions(config) {
     $(config.target).html(html);
 }
 
-function syncYearInputs(data) {
-    const years = (data || [])
+function syncYearInputs() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'year');
+    const years = (d || [])
         .map(function(item) { return Number(item.anio || 0); })
         .filter(function(value) { return Number.isFinite(value) && value > 0; });
 
@@ -578,14 +617,12 @@ function syncYearInputs(data) {
     const minYear = years.length ? Math.min.apply(null, years) : 1900;
     const maxYear = years.length ? Math.max.apply(null, years) : currentYear;
 
-    $("#smartYearMin, #smartYearMax").attr({
-        min: minYear,
-        max: maxYear
-    });
+    $("#smartYearMin, #smartYearMax").attr({ min: minYear, max: maxYear });
 }
 
-function syncSliderBounds(data) {
-    const prices = data
+function syncSliderBounds() {
+    const d = filterItemsForFacet(getActiveData(), SEARCH_PAGE_STATE.activeType, 'price');
+    const prices = (d || [])
         .map(function(item) { return Number(item.precio_referencia || 0); })
         .filter(function(value) { return !Number.isNaN(value) && value >= 0; });
 
@@ -611,10 +648,12 @@ function renderPriceSlider(maxPrice) {
     const sliderElement = document.getElementById("smart-price-slider");
     if (!sliderElement) return;
 
+    if (sliderElement.noUiSlider && sliderMaxActual === maxPrice) return;
+
     if (sliderElement.noUiSlider) {
         try { sliderElement.noUiSlider.destroy(); } catch (_) {}
     }
-
+    sliderMaxActual = maxPrice;
     sliderElement.innerHTML = "";
 
     const moneyFormat = window.moneyFormat || wNumb({
@@ -652,9 +691,50 @@ function renderPriceSlider(maxPrice) {
     });
 }
 
+/* Filtra items para construir opciones de facetas (sin ranking).
+ * skipFacet: nombre del filtro que se omite para mostrar qué opciones quedan disponibles. */
+function filterItemsForFacet(items, itemType, skipFacet) {
+    const filters = SEARCH_PAGE_STATE.filters;
+    const query = SEARCH_PAGE_STATE.secondarySearch;
+    const terms = splitSearchTerms(query);
+
+    return (items || []).filter(function(item) {
+        const type = itemType || resolveItemType(item);
+        const config = getTypeConfig(type);
+
+        if (terms.length > 0) {
+            const haystack = normalizeText(pickSearchableParts(item, type).join(" "));
+            if (terms.filter(function(t) { return haystack.includes(t); }).length === 0) return false;
+        }
+
+        const location = [
+            titleCase(firstFromJsonLike(item.provincia || "")),
+            titleCase(firstFromJsonLike(item.canton || ""))
+        ].filter(Boolean).join(" / ");
+        const price = Number(item.precio_referencia || 0);
+        const year  = Number(item.anio || 0);
+
+        if (skipFacet !== 'brands'       && config.showBrand         && filters.brands.length       && !hasAnyMatch(filters.brands,       getBrandNames(item)))       return false;
+        if (skipFacet !== 'models'       && config.showModel         && filters.models.length       && !hasAnyMatch(filters.models,       getModelNames(item)))       return false;
+        if (skipFacet !== 'categories'   && config.showCategory      && filters.categories.length   && !hasAnyMatch(filters.categories,   getCategoryNames(item)))    return false;
+        if (skipFacet !== 'serviceNames' && config.showServiceNames  && filters.serviceNames.length && !hasAnyMatch(filters.serviceNames,  getServiceNames(item)))    return false;
+        if (skipFacet !== 'references'   && config.showReference     && filters.references.length   && !hasAnyMatch(filters.references,   getReferenceNames(item)))   return false;
+        if (skipFacet !== 'colors'       && config.showColor         && filters.colors.length       && !hasAnyMatch(filters.colors,       getColorNames(item)))       return false;
+        if (skipFacet !== 'tapicerias'   && config.showTapiceria     && filters.tapicerias.length   && !hasAnyMatch(filters.tapicerias,   getTapiceriaNames(item)))   return false;
+        if (filters.location && location !== filters.location) return false;
+        if (skipFacet !== 'year') {
+            if (config.showYear && filters.yearMin !== null && Number.isFinite(year) && year > 0 && year < filters.yearMin) return false;
+            if (config.showYear && filters.yearMax !== null && Number.isFinite(year) && year > 0 && year > filters.yearMax) return false;
+        }
+        if (skipFacet !== 'price' && (price < filters.priceMin || price > filters.priceMax)) return false;
+
+        return true;
+    });
+}
+
 function applySearchFilters(items, itemType) {
     const filters = SEARCH_PAGE_STATE.filters;
-    const query = SEARCH_PAGE_STATE.secondarySearch || SEARCH_PAGE_STATE.search;
+    const query = SEARCH_PAGE_STATE.secondarySearch;
     const ranked = [];
 
     (items || []).forEach(function(item, index) {
@@ -804,7 +884,7 @@ function renderSearchCard(item) {
                 </div>
                 <div class="product-content-wrap d-flex flex-column flex-grow-1 text-center px-2 pb-3">
                     <div class="small text-muted mb-1">${verified ? "✓ Vendedor Verificado" : "&nbsp;"}</div>
-                    <h6 class="limitar-lineas mb-2 mt-1" style="font-weight:700;">
+                    <h6 class="limitar-lineas mb-2 mt-1" style="font-weight:normal;">
                         <a href="${href}" target="_blank" rel="noopener noreferrer" onclick="${config.detailAction(item)}">${escapeHtml(title)}</a>
                     </h6>
                     <div class="small text-muted limitar-lineas mb-2">${escapeHtml(subtitle || " ")}</div>
@@ -917,7 +997,6 @@ function getHashForType(type) {
 
 function getTypeFromHash() {
     const hash = String(window.location.hash || "").replace("#", "").toLowerCase();
-    if (hash === "todos") return "all";
     if (hash === "servicios") return "services";
     if (hash === "vehiculos") return "vehicles";
     return "products";
